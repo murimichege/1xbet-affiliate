@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTheme, useSidebar } from '@/hooks';
-import { Sidebar, Header } from '@/components/layout';
+import   Header from '@/components/layout/Header';
 import { Card, Icon } from '@/components/ui';
 import { 
   MainPage,
@@ -13,6 +13,7 @@ import {
   PlayerReportPage 
 } from '@/components/pages';
 import { NAVIGATION_ITEMS, MARKETING_ITEMS, REPORT_ITEMS } from '@/utils/constants';
+import Sidebar from './components/layout/Sidebar';
 
 const Dashboard: React.FC = () => {
   const { darkMode, setDarkMode } = useTheme();
