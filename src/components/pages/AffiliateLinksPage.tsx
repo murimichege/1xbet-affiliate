@@ -198,7 +198,7 @@ const AffiliateLinksPage: React.FC = () => {
         </div>
       </Card>
 
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden p-6 space-y-6">
         <div className="p-0">
           <DataTable
             data={links}

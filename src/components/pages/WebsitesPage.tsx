@@ -109,21 +109,6 @@ const WebsitesPage: React.FC = () => {
     }
   };
 
-
-  const handleEditWebsite = (website: Website) => {
-    setFormData({
-      url: website.url,
-      category: website.category,
-      language: website.language,
-    });
-  };
-
-  const handleDeleteWebsite = (websiteId: string) => {
-    if (window.confirm('Are you sure you want to delete this website?')) {
-      setWebsites(prev => prev.filter(w => w.id !== websiteId));
-    }
-  };
-
   const updateFormData = (key: keyof WebsiteFormData, value: string) => {
     setFormData(prev => ({ ...prev, [key]: value }));
   };

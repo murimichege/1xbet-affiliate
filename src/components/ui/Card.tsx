@@ -1,7 +1,6 @@
 import React from 'react';
 
-export interface CardProps {
-  darkMode?: boolean;
+export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   className?: string;
   children: React.ReactNode;
   hoverable?: boolean;
@@ -9,18 +8,13 @@ export interface CardProps {
 }
 
 const Card: React.FC<CardProps> = ({
-  darkMode = false,
   className = '',
   children,
   hoverable = false,
-  padding = 'none'
+  padding = 'none',
+  ...rest
 }) => {
-  const baseClasses = `rounded-lg border transition-all duration-200 ${
-    darkMode 
-      ? 'bg-gray-800 border-gray-700' 
-      : 'bg-white border-gray-200'
-  }`;
-  
+  const baseClasses = `rounded-lg border bg-white border-gray-200 transition-all duration-200`;
   const hoverClasses = hoverable ? 'hover:shadow-lg cursor-pointer' : 'shadow-sm';
   
   const paddingClasses = {
@@ -31,9 +25,9 @@ const Card: React.FC<CardProps> = ({
   };
   
   const classes = `${baseClasses} ${hoverClasses} ${paddingClasses[padding]} ${className}`;
-  
+
   return (
-    <div className={classes}>
+    <div className={classes} {...rest}>
       {children}
     </div>
   );

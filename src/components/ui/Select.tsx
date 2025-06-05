@@ -8,41 +8,34 @@ export interface SelectOption {
 export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   label?: string;
   error?: string;
-  darkMode?: boolean;
   options: SelectOption[] | string[];
 }
 
 const Select: React.FC<SelectProps> = ({
   label,
   error,
-  darkMode = false,
   options,
   className = '',
   ...props
 }) => {
-  const baseClasses = `w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-    darkMode 
-      ? 'bg-gray-700 border-gray-600 text-white' 
-      : 'bg-white border-gray-300'
-  } ${error ? 'border-red-500' : ''}`;
-  
-  const normalizedOptions = options.map(option => 
-    typeof option === 'string' 
+  const baseClasses =
+    'w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors bg-white border-gray-300';
+
+  const normalizedOptions = options.map(option =>
+    typeof option === 'string'
       ? { value: option, label: option }
       : option
   );
-  
+
   return (
     <div className="w-full">
       {label && (
-        <label className={`block text-sm font-medium mb-2 ${
-          darkMode ? 'text-gray-300' : 'text-gray-700'
-        }`}>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
           {label}
         </label>
       )}
       <select
-        className={`${baseClasses} ${className}`}
+        className={`${baseClasses} ${error ? 'border-red-500' : ''} ${className}`}
         {...props}
       >
         {normalizedOptions.map((option) => (

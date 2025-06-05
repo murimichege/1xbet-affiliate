@@ -179,7 +179,8 @@ const PromoCodesPage: React.FC = () => {
         </div>
       </Card>
 
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden p-6 space-y-6">
+        
         <div className="flex justify-between items-center px-6 pt-6 pb-3 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900">
             Generated Promo Codes

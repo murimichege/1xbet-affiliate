@@ -1,11 +1,10 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   useReactTable,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
-  flexRender,
   ColumnDef,
   SortingState,
   RowSelectionState,
@@ -22,7 +21,6 @@ import { LoadingState } from './LoadingState';
 function DataTable<T>({
   data,
   columns,
-  darkMode = false,
   showPagination = true,
   pageSize = 10,
   pageSizeOptions = [5, 10, 20, 50, 100],
@@ -33,7 +31,6 @@ function DataTable<T>({
   enableSelection = false,
   onSelectionChange,
   enableSorting = true,
-  enableFiltering = true,
   enableGlobalSearch = true,
   searchPlaceholder = "Search all columns...",
   className = "",

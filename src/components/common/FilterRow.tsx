@@ -5,7 +5,6 @@ import { debounce } from '@/utils/helpers';
 
 interface FilterRowProps {
   filters: FilterConfig[];
-  darkMode?: boolean;
   onApply?: (filters: Record<string, string>) => void;
   onReset?: () => void;
   loading?: boolean;
@@ -13,7 +12,6 @@ interface FilterRowProps {
 
 const FilterRow: React.FC<FilterRowProps> = ({ 
   filters, 
-  darkMode = false, 
   onApply,
   onReset,
   loading = false 
@@ -65,16 +63,14 @@ const FilterRow: React.FC<FilterRowProps> = ({
                 label={filter.label}
                 options={filter.options}
                 value={filterValues[filter.name]}
-                onChange={(e: { target: { value: string; }; }) => handleSelectChange(filter.name, e.target.value)}
-                darkMode={darkMode}
+                onChange={(e: { target: { value: string } }) => handleSelectChange(filter.name, e.target.value)}
               />
             ) : filter.type === 'date' ? (
               <Input
                 type="date"
                 label={filter.label}
                 value={filterValues[filter.name]}
-                onChange={(e: { target: { value: string; }; }) => handleInputChange(filter.name, e.target.value)}
-                darkMode={darkMode}
+                onChange={(e: { target: { value: string } }) => handleInputChange(filter.name, e.target.value)}
               />
             ) : (
               <Input
@@ -82,8 +78,7 @@ const FilterRow: React.FC<FilterRowProps> = ({
                 label={filter.label}
                 placeholder={filter.placeholder}
                 value={filterValues[filter.name]}
-                onChange={(e: { target: { value: string; }; }) => handleInputChange(filter.name, e.target.value)}
-                darkMode={darkMode}
+                onChange={(e: { target: { value: string } }) => handleInputChange(filter.name, e.target.value)}
               />
             )}
           </div>
@@ -110,7 +105,7 @@ const FilterRow: React.FC<FilterRowProps> = ({
 
         {/* Quick Filters */}
         <div className="flex items-center gap-2 ml-4">
-          <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+          <span className="text-sm text-gray-600">
             Quick:
           </span>
           <Button 
@@ -132,4 +127,5 @@ const FilterRow: React.FC<FilterRowProps> = ({
     </div>
   );
 };
-export default FilterRow
+
+export default FilterRow;

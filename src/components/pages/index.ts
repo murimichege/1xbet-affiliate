@@ -5,7 +5,6 @@ export { default as WebsitesPage } from './WebsitesPage';
 export { default as PaymentsPage } from './PaymentsHistory';
 export { default as CommissionStructurePage } from './CommissionStructure';
 
-// Report pages
 export { default as FullReportPage } from './FullReportPage';
 export { default as PlayerReportPage } from './PlayerReportPage';
 export { default as SummaryPage } from './SummaryPage';

@@ -3,7 +3,6 @@ import { DataTable } from '@/components/common/Datatable';
 import { Card, Button, Icon, Select, Input } from '@/components/ui';
 import { ColumnDef } from '@tanstack/react-table';
 import {
-  FILTER_CONFIGS,
   CURRENCIES,
   WEBSITE_URLS,
   TIME_INTERVALS,
