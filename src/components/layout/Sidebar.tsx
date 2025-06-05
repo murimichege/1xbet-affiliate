@@ -70,43 +70,46 @@ const Sidebar: React.FC<SidebarProps> = ({
     <>
       <div
         id="sidebar"
-        className={`fixed inset-y-0 left-0 z-50 ${sidebarOpen ? 'w-64' : 'w-0 lg:w-16'} bg-white border-gray-200 border-r transform transition-all duration-300 ease-in-out flex flex-col overflow-hidden ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        className={`fixed inset-y-0 left-0 z-50 bg-white border-gray-200 border-r transform transition-all duration-300 ease-in-out flex flex-col overflow-hidden ${
+          sidebarOpen 
+            ? 'w-64 translate-x-0' 
+            : 'w-0 lg:w-16 -translate-x-full lg:translate-x-0'
         }`}
       >
-        <div
-          className={`flex items-center h-16 px-6 border-b border-gray-200 flex-shrink-0 ${
-            sidebarOpen ? 'justify-between' : 'justify-center'
-          }`}
-        >
+        {/* Header/Logo Section */}
+        <div className="flex items-center h-16 border-b border-gray-200 flex-shrink-0">
           {sidebarOpen ? (
-            <div className="flex items-center space-x-3">
+            // Expanded view - full logo and text
+            <div className="flex items-center justify-between w-full px-6">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg flex items-center justify-center shadow-lg flex-shrink-0">
+                  <span className="text-white font-bold text-sm">1X</span>
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-xl font-bold text-blue-600 leading-tight">BET</span>
+                  <span className="text-xs text-gray-500 -mt-1 leading-tight">PARTNERS</span>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSidebarOpen(false)}
+                className="lg:hidden flex-shrink-0"
+              >
+                <Icon name="fas fa-times" />
+              </Button>
+            </div>
+          ) : (
+            // Collapsed view - just the icon, centered
+            <div className="flex items-center justify-center w-full">
               <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg flex items-center justify-center shadow-lg">
                 <span className="text-white font-bold text-sm">1X</span>
               </div>
-              <div className="flex flex-col">
-                <span className="text-xl font-bold text-blue-600">BET</span>
-                <span className="text-xs text-gray-500 -mt-1">PARTNERS</span>
-              </div>
             </div>
-          ) : (
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg flex items-center justify-center shadow-lg">
-              <span className="text-white font-bold text-sm">1X</span>
-            </div>
-          )}
-
-          {sidebarOpen && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSidebarOpen(false)}
-              className="lg:hidden"
-            >
-              <Icon name="fas fa-times" />
-            </Button>
           )}
         </div>
 
+        {/* Navigation Section */}
         <nav className={`flex-1 overflow-y-auto py-6 ${sidebarOpen ? 'px-3' : 'px-2'}`}>
           <NavSection title="MAIN MENU" items={navigationItems} />
           <NavSection title="MARKETING" items={marketingItems} />
@@ -114,6 +117,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         </nav>
       </div>
 
+      {/* Mobile Overlay */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden transition-opacity duration-300"
