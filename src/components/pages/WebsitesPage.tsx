@@ -50,15 +50,50 @@ const WebsitesPage: React.FC = () => {
         );
       },
     },
-    // {
-    //   accessorKey: 'category',
-    //   header: 'Category',
-    //   cell: info => (
-    //     <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-    //       {info.getValue() as string}
-    //     </span>
-    //   ),
-    // },
+   // Add this column to your websiteColumns array
+{
+  accessorKey: 'status',
+  header: 'Status',
+  cell: info => {
+    const status = info.getValue() as string;
+    return (
+      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+        status === 'active' 
+          ? 'bg-green-100 text-green-700' 
+          : 'bg-gray-100 text-gray-700'
+      }`}>
+        {status === 'active' ? 'Active' : 'Hidden'}
+      </span>
+    );
+  },
+},
+{
+  id: 'actions',
+  header: 'Actions',
+  cell: ({ row }) => {
+    const website = row.original;
+    const isActive = website.status === 'active';
+    
+    return (
+      <div className="flex items-center space-x-2">
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => toggleWebsiteStatus(website.id)}
+          className={`${
+            isActive 
+              ? 'text-orange-600 hover:text-orange-700 hover:bg-orange-50' 
+              : 'text-green-600 hover:text-green-700 hover:bg-green-50'
+          }`}
+        >
+          <Icon name={isActive ? 'fas fa-eye-slash' : 'fas fa-eye'} />
+        </Button>
+        
+       
+      </div>
+    );
+  },
+}
 
   ];
 
@@ -108,7 +143,15 @@ const WebsitesPage: React.FC = () => {
       setLoading(false);
     }
   };
-
+  const toggleWebsiteStatus = (websiteId: string) => {
+    setWebsites(prev => 
+      prev.map(website => 
+        website.id === websiteId 
+          ? { ...website, status: website.status === 'active' ? 'inactive' : 'active' }
+          : website
+      )
+    );
+  };
   const updateFormData = (key: keyof WebsiteFormData, value: string) => {
     setFormData(prev => ({ ...prev, [key]: value }));
   };
