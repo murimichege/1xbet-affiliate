@@ -1,155 +1,217 @@
-import React, { useState } from 'react';
-import { Card, Button, Icon, Input, Select } from '../ui';
-import { FILTER_CONFIGS, SUMMARY_METRICS } from '@/data/dummyData';
+import React, { useState, useMemo } from 'react';
+import { Card, Button, Icon } from '@/components/ui';
+import { SummaryReportFilters, FilterField } from '@/components/common/ReportFilters';
+import { useFilters } from '@/hooks/useFilters';
+import { useAsyncAction } from '@/hooks/useAsyncAction';
+import { SUMMARY_METRICS } from '@/data/dummyData';
 import { exportToCSV } from '@/utils/csvExport';
+import { SUMMARY_FILTER_FIELDS } from '@/utils/ReportConfig';
+
+const INITIAL_SUMMARY_FILTERS = {
+  currency: 'USD',
+  website: 'All',
+  marketingToolId: '',
+  timeInterval: 'Exact period',
+  dateFrom: '2025-06-04',
+  dateTo: '2025-06-04'
+};
+
+
+
+interface SummaryData {
+  views: number;
+  clicks: number;
+  directLinks: number;
+  clicksViews: number;
+  registrations: number;
+  regClicksRatio: number;
+  regWithDeposits: number;
+  regDepositRatio: number;
+  totalNewDepositAmount: number;
+  newDepositors: number;
+  accountsWithDeposits: number;
+  sumAllDeposits: number;
+  revenue: number;
+  numberOfDeposits: number;
+  activePlayers: number;
+  avgProfitPerPlayer: number;
+}
 
 const SummaryPage: React.FC = () => {
-  const [loading, setLoading] = useState(false);
-  const [reportData, setReportData] = useState<Record<string, number>>({});
-  const [filters, setFilters] = useState<Record<string, string>>({
-    currency: 'USD',
-    website: 'All',
-    marketingToolId: '',
-    timeInterval: 'Exact period',
-    dateFrom: '2025-06-04',
-    dateTo: '2025-06-04'
+  const [reportData, setReportData] = useState<SummaryData | null>(null);
+
+  const {
+    filters,
+    updateFilter,
+    applyFilters,
+    resetFilters,
+    isApplying
+  } = useFilters(INITIAL_SUMMARY_FILTERS, {
+    onApply: async (filters) => {
+      const data = await generateMockSummaryData(filters);
+      setReportData(data);
+    },
+    onReset: () => {
+      setReportData(null);
+    }
   });
 
-  const summaryFilters = FILTER_CONFIGS.summary;
-  const summaryMetrics = SUMMARY_METRICS;
+  const generateMockSummaryData = async (filters: typeof INITIAL_SUMMARY_FILTERS): Promise<SummaryData> => {
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    return {
+      views: 3489,
+      clicks: 754,
+      directLinks: 27,
+      clicksViews: 9.8,
+      registrations: 102,
+      regClicksRatio: 13.5,
+      regWithDeposits: 62,
+      regDepositRatio: 60.7,
+      totalNewDepositAmount: 28974,
+      newDepositors: 21,
+      accountsWithDeposits: 49,
+      sumAllDeposits: 75400,
+      revenue: 3540,
+      numberOfDeposits: 123,
+      activePlayers: 87,
+      avgProfitPerPlayer: 174
+    };
+  };
 
-  const handleGenerateReport = async () => {
-    setLoading(true);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      const mockData: Record<string, number> = {
-        views: 3489,
-        clicks: 754,
-        directLinks: 27,
-        clicksViews: 9.8,
-        registrations: 102,
-        regClicksRatio: 13.5,
-        regWithDeposits: 62,
-        regDepositRatio: 60.7,
-        totalNewDepositAmount: 28974,
-        newDepositors: 21,
-        accountsWithDeposits: 49,
-        sumAllDeposits: 75400,
-        revenue: 3540,
-        numberOfDeposits: 123,
-        activePlayers: 87,
-        avgProfitPerPlayer: 174
-      };
-      setReportData(mockData);
-    } catch (error) {
-      console.error('Error generating report:', error);
-    } finally {
-      setLoading(false);
+  const { execute: handleExport, loading: isExporting } = useAsyncAction(
+    async () => {
+      if (!reportData) return;
+      
+      const rows = SUMMARY_METRICS.map(metric => ({
+        Metric: metric.label,
+        Value: reportData[metric.key as keyof SummaryData] !== undefined 
+          ? reportData[metric.key as keyof SummaryData] 
+          : '-'
+      }));
+      
+      exportToCSV(rows, `summary-report-${new Date().toISOString().split('T')[0]}`);
+    },
+    {
+      onSuccess: () => console.log('Summary report exported successfully'),
+      onError: (error) => console.error('Export failed:', error)
     }
-  };
+  );
 
-  const handleExportCSV = () => {
-    const rows = summaryMetrics.map(metric => ({
-      Metric: metric.label,
-      Value: reportData[metric.key] !== undefined ? reportData[metric.key] : '-'
-    }));
-    exportToCSV(rows, 'summary-report');
-  };
+  const formattedMetrics = useMemo(() => {
+    if (!reportData) return [];
 
-  const handleFilterChange = (name: string, value: string) => {
-    setFilters(prev => ({ ...prev, [name]: value }));
-  };
+    return SUMMARY_METRICS.map(metric => {
+      const value = reportData[metric.key as keyof SummaryData];
+      let formattedValue = '-';
+
+      if (value !== undefined) {
+        // Format based on metric type
+        if (metric.key.includes('Ratio') || metric.key.includes('Views')) {
+          formattedValue = `${value.toFixed(1)}%`;
+        } else if (metric.key.includes('Amount') || metric.key.includes('revenue') || metric.key.includes('sumAll')) {
+          formattedValue = `${filters.currency} ${value.toLocaleString()}`;
+        } else {
+          formattedValue = value.toLocaleString();
+        }
+      }
+
+      return {
+        ...metric,
+        formattedValue,
+        rawValue: value
+      };
+    });
+  }, [reportData, filters.currency]);
 
   return (
     <div className="space-y-6">
-      {/* Filters */}
-      <Card padding="md">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {summaryFilters.map(filter => (
-            <div key={filter.name}>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{filter.label}</label>
-              {filter.type === 'select' ? (
-                <Select 
-                  options={(filter.options || []).map(opt => ({ value: opt, label: opt }))} 
-                  value={filters[filter.name]} 
-                  onChange={(e) => handleFilterChange(filter.name, e.target.value)}
-                />
-              ) : (
-                <Input 
-                  type={filter.type} 
-                  value={filters[filter.name] || ''} 
-                  onChange={(e) => handleFilterChange(filter.name, e.target.value)} 
-                  placeholder={filter.placeholder || ''}
-                />
-              )}
-            </div>
-          ))}
-        </div>
+      <SummaryReportFilters
+        filters={filters}
+        onFilterChange={updateFilter}
+        onApply={applyFilters}
+        onReset={resetFilters}
+        fields={SUMMARY_FILTER_FIELDS}
+        isLoading={isApplying}
+      />
 
-        {filters.timeInterval === 'Exact period' && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">From</label>
-              <Input 
-                type="date" 
-                value={filters.dateFrom} 
-                onChange={(e) => handleFilterChange('dateFrom', e.target.value)} 
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">To</label>
-              <Input 
-                type="date" 
-                value={filters.dateTo} 
-                onChange={(e) => handleFilterChange('dateTo', e.target.value)} 
-              />
-            </div>
-          </div>
-        )}
+   
 
-        <div className="mt-6 flex justify-end">
-          <Button 
-            onClick={handleGenerateReport}
-            icon="fas fa-chart-line"
-            loading={loading}
-            size="lg"
-          >
-            GENERATE REPORT
-          </Button>
-        </div>
-      </Card>
-
-      {/* Summary Report */}
-      <Card padding="md">
+      <Card className="p-6">
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-xl font-semibold text-gray-900">Summary Report</h3>
-          {Object.keys(reportData).length > 0 && (
-            <Button variant="secondary" icon="fas fa-download" onClick={handleExportCSV}>
-              EXPORT REPORT
+          <div>
+            <h3 className="text-xl font-semibold text-gray-900">Detailed Summary Report</h3>
+            <p className="text-sm text-gray-500 mt-1">
+              {reportData 
+                ? `Generated for ${filters.dateFrom} to ${filters.dateTo}` 
+                : 'Generate a report to view detailed metrics'
+              }
+            </p>
+          </div>
+          
+          {reportData && (
+            <Button 
+              variant="secondary" 
+              icon="fas fa-download" 
+              onClick={handleExport}
+              loading={isExporting}
+              disabled={isExporting}
+            >
+              {isExporting ? 'EXPORTING...' : 'EXPORT REPORT'}
             </Button>
           )}
         </div>
 
-        {Object.keys(reportData).length > 0 ? (
-          <table className="w-full table-auto border border-gray-200">
-            <tbody>
-              {summaryMetrics.map(metric => (
-                <tr key={metric.key} className="even:bg-gray-50 border-b">
-                  <td className="text-sm font-medium text-gray-700 px-4 py-3 w-1/2">
-                    {metric.label}
-                  </td>
-                  <td className="text-sm font-semibold text-gray-900 px-4 py-3 text-right">
-                    {reportData[metric.key] !== undefined ? reportData[metric.key].toLocaleString() : '-'}
-                  </td>
+        {reportData ? (
+          <div className="overflow-hidden rounded-lg border border-gray-200">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="text-left text-sm font-medium text-gray-700 px-6 py-3">
+                    Metric
+                  </th>
+                  <th className="text-right text-sm font-medium text-gray-700 px-6 py-3">
+                    Value
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-200 bg-white">
+                {formattedMetrics.map((metric, index) => (
+                  <tr 
+                    key={metric.key} 
+                    className={`hover:bg-gray-50 transition-colors ${
+                      index % 2 === 0 ? 'bg-white' : 'bg-gray-25'
+                    }`}
+                  >
+                    <td className="text-sm font-medium text-gray-700 px-6 py-4">
+                      {metric.label}
+                    </td>
+                    <td className="text-sm font-semibold text-gray-900 px-6 py-4 text-right">
+                      {metric.formattedValue}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         ) : (
-          <div className="text-center py-12 text-gray-500">
-            <Icon name="fas fa-chart-bar" size="xl" className="mb-4 block" />
-            <p className="text-lg font-medium mb-2">No Report Generated</p>
-            <p className="text-sm">Click "Generate Report" to view your summary statistics</p>
+          <div className="text-center py-16 text-gray-500">
+            <div className="mb-4">
+              <Icon name="fas fa-chart-bar" size="md" className="text-gray-400 mx-auto" />
+            </div>
+            <h4 className="text-lg font-medium text-gray-900 mb-2">No Report Generated</h4>
+            <p className="text-sm text-gray-500 mb-6 max-w-md mx-auto">
+              Configure your filters above and click "Generate Report" to view your summary statistics and detailed metrics.
+            </p>
+            <Button 
+              onClick={applyFilters}
+              icon="fas fa-chart-line"
+              loading={isApplying}
+              disabled={isApplying}
+            >
+              {isApplying ? 'GENERATING...' : 'GENERATE REPORT'}
+            </Button>
           </div>
         )}
       </Card>

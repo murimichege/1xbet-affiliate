@@ -159,7 +159,6 @@ const MainPage: React.FC = () => {
         ))}
       </div>
 
-      {/* Stats Summary Section with DataTable */}
       <Card className="p-6">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-semibold text-gray-900">
@@ -185,6 +184,7 @@ const MainPage: React.FC = () => {
             pageSize={10}
             enableGlobalSearch={true}
             enableSorting={true}
+            enableSelection={true}
             showPagination={true}
             tableClassName="min-w-full table-fixed"
             className="w-full"

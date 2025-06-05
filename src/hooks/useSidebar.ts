@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 
 export const useSidebar = () => {
-  // Initialize sidebar as closed by default, will be handled by resize effect
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Initialize sidebar state based on screen size
