@@ -21,7 +21,6 @@ interface StatsTableData {
 }
 
 const MainPage: React.FC = () => {
-  const [loading, setLoading] = useState(false);
   const [selectedTimeframe, setSelectedTimeframe] = useState('Yesterday');
   
   const statsTableColumns = useMemo<ColumnDef<StatsTableData>[]>(() => [
@@ -155,7 +154,7 @@ const MainPage: React.FC = () => {
           <StatCard 
             key={card.id} 
             data={card} 
-            loading={loading}
+            // loading={loading}
           />
         ))}
       </div>
