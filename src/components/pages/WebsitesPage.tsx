@@ -95,7 +95,7 @@ const WebsitesPage: React.FC = () => {
         url: formData.url,
         category: formData.category,
         language: formData.language,
-        status: 'active',
+        status: 'active' ,
         createdAt: new Date().toISOString(),
       };
 

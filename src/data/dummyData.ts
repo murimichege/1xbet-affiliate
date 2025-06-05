@@ -4,7 +4,7 @@ export const WEBSITES = [
       url: 'https://mysite.com', 
       category: 'Sports predictions', 
       language: 'English', 
-      status: 'active', 
+      status: 'active' as const, 
       createdAt: '2025-01-15' 
     },
     { 
@@ -12,7 +12,7 @@ export const WEBSITES = [
       url: 'https://sportsnews.com', 
       category: 'Sports news', 
       language: 'English', 
-      status: 'active', 
+      status: 'active' as const, 
       createdAt: '2025-01-10' 
     },
     { 
@@ -20,7 +20,7 @@ export const WEBSITES = [
       url: 'https://betanalysis.com', 
       category: 'Bookmakers and bets', 
       language: 'Spanish', 
-      status: 'active', 
+      status: 'active' as const, 
       createdAt: '2025-01-05' 
     }
   ];
@@ -180,8 +180,8 @@ export const WEBSITES = [
     newDepositors: 34,
     companyProfit: 8950000.00,
     rs: 11.5,
-    cpa: 48500.00,
-    commissionAmount: 1342500.00
+    cpa: 485.00,
+    commissionAmount: 134250.00
   },
   {
     currency: 'TZS',
@@ -190,10 +190,10 @@ export const WEBSITES = [
     directLinks: 245,
     registrations: 48,
     newDepositors: 28,
-    companyProfit: 12450000.00,
+    companyProfit: 1245000.00,
     rs: 10.2,
-    cpa: 65000.00,
-    commissionAmount: 1867500.00
+    cpa: 6500.00,
+    commissionAmount: 187500.00
   },
   {
     currency: 'EUR',

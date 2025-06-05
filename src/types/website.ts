@@ -3,7 +3,7 @@ export interface Website {
     url: string;
     category: string;
     language: string;
-    status: 'active';
+  status: 'active' | 'inactive' | 'pending'; // Allow multiple status values
     createdAt?: string;
     updatedAt?: string;
   }

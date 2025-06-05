@@ -1,12 +1,13 @@
 import React from 'react';
 
 interface FooterProps {
+  darkMode?: boolean;
   className?: string;
 }
 
-const Footer: React.FC<FooterProps> = ({ className = '' }) => {
+const Footer: React.FC<FooterProps> = ({ darkMode = false, className = '' }) => {
   return (
-    <footer className={`bg-gray-800 text-gray-300 py-6 px-6 ${className}`}>
+    <footer className={`${darkMode ? 'bg-gray-900 text-gray-300' : 'bg-gray-800 text-gray-300'} py-6 px-6 ${className}`}>
       <div className="max-w-7xl mx-auto">
         {/* Cookie Notice */}
         <div className="mb-4">
@@ -44,6 +45,8 @@ const Footer: React.FC<FooterProps> = ({ className = '' }) => {
             <a href="#" className="hover:text-white transition-colors">
               COOKIE POLICY
             </a>
+            
+            {/* Android App Link */}
             <a href="#" className="flex items-center text-green-400 hover:text-green-300 transition-colors">
               <i className="fab fa-android mr-1"></i>
               App for Android™
@@ -56,6 +59,8 @@ const Footer: React.FC<FooterProps> = ({ className = '' }) => {
               <div className="text-yellow-400 font-bold text-sm">WINNER</div>
               <div className="text-xs">Best Affiliate Product Innovation</div>
             </div>
+            
+            {/* Award Logo */}
             <div className="w-16 h-12 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-lg flex items-center justify-center shadow-lg">
               <div className="text-black font-bold text-xs text-center">
                 <div>SBC</div>
@@ -75,5 +80,4 @@ const Footer: React.FC<FooterProps> = ({ className = '' }) => {
     </footer>
   );
 };
-
 export default Footer;
