@@ -1,7 +1,12 @@
-import React, { useState } from 'react';
+import React, { useMemo } from 'react';
 import { DataTable } from '@/components/common/Datatable';
-import { Card, Button, Icon, Select, Input } from '@/components/ui';
+import { Card, Button } from '@/components/ui';
+import { CurrencyCell } from '@/components/ui/CurrencyCell';
+import { ReportFilters, FilterField } from '@/components/common/ReportFilters';
 import { ColumnDef } from '@tanstack/react-table';
+import { useFilters } from '@/hooks/useFilters';
+import { useAsyncAction } from '@/hooks/useAsyncAction';
+import { useReportData, ReportData, ReportFilters as ReportFiltersType } from '@/hooks/useReportData';
 import {
   CURRENCIES,
   WEBSITE_URLS,
@@ -9,174 +14,240 @@ import {
   REGISTRATION_SOURCES
 } from '@/data/dummyData';
 
-interface FullReportData {
-  websiteId: string;
-  website: string;
-  registrations: number;
-  newDepositors: number;
-  totalDepositAmount: number;
-  bonusAmount: number;
-  companyProfit: number;
-  commissionAmount: number;
-}
+const INITIAL_FILTERS: ReportFiltersType = {
+  currency: 'USD',
+  website: 'All',
+  marketingToolId: '',
+  timeInterval: 'Exact period',
+  dateFrom: '2025-06-04',
+  dateTo: '2025-06-04',
+  registrationSource: 'Select...'
+};
+
+const FILTER_FIELDS: FilterField[] = [
+  {
+    key: 'currency',
+    label: 'Currency',
+    type: 'select',
+    options: CURRENCIES
+  },
+  {
+    key: 'website',
+    label: 'Website',
+    type: 'select',
+    options: ['All', ...WEBSITE_URLS]
+  },
+  {
+    key: 'marketingToolId',
+    label: 'Marketing tool ID',
+    type: 'text',
+    placeholder: 'Enter tool ID'
+  },
+  {
+    key: 'timeInterval',
+    label: 'Time interval',
+    type: 'select',
+    options: TIME_INTERVALS
+  },
+  {
+    key: 'dateFrom',
+    label: 'Date Range',
+    type: 'date'
+  },
+  {
+    key: 'dateTo',
+    label: '',
+    type: 'date'
+  },
+  {
+    key: 'registrationSource',
+    label: 'Registration Source',
+    type: 'select',
+    options: REGISTRATION_SOURCES
+  }
+];
 
 const FullReportPage: React.FC = () => {
-  const [reportData, setReportData] = useState<FullReportData[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [filters, setFilters] = useState({
-    currency: 'USD',
-    website: 'All',
-    marketingToolId: '',
-    timeInterval: 'Exact period',
-    dateFrom: '2025-06-04',
-    dateTo: '2025-06-04',
-    registrationSource: 'Select...'
+  const { reportData, setReportData, generateMockReportData } = useReportData();
+  
+  const {
+    filters,
+    updateFilter,
+    applyFilters,
+    resetFilters,
+    isApplying
+  } = useFilters(INITIAL_FILTERS, {
+    onApply: async (filters) => {
+      const data = await generateMockReportData(filters);
+      setReportData(data);
+    },
+    onReset: () => setReportData([])
   });
 
-  const updateFilter = (key: string, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
-  };
-
-  const handleGenerateReport = async () => {
-    setLoading(true);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setReportData([
-        {
-          websiteId: '4429642',
-          website: 'https://mysite.com',
-          registrations: 120,
-          newDepositors: 45,
-          totalDepositAmount: 56000,
-          bonusAmount: 8000,
-          companyProfit: 15000,
-          commissionAmount: 5000
-        },
-        {
-          websiteId: '4429643',
-          website: 'https://sportsnews.com',
-          registrations: 98,
-          newDepositors: 30,
-          totalDepositAmount: 42000,
-          bonusAmount: 6000,
-          companyProfit: 11000,
-          commissionAmount: 3000
-        }
-      ]);
-    } catch (error) {
-      console.error('Error generating report:', error);
-    } finally {
-      setLoading(false);
+  const { execute: handleExport, loading: isExporting } = useAsyncAction(
+    async () => {
+      // Simulate export
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // In real app, this would trigger file download
+      const csvData = reportData.map(row => ({
+        'Website ID': row.websiteId,
+        'Website': row.website,
+        'Registrations': row.registrations,
+        'New Depositors': row.newDepositors,
+        'Total Deposit Amount': `${filters.currency} ${row.totalDepositAmount.toLocaleString()}`,
+        'Bonus Amount': `${filters.currency} ${row.bonusAmount.toLocaleString()}`,
+        'Company Profit': `${filters.currency} ${row.companyProfit.toLocaleString()}`,
+        'Commission Amount': `${filters.currency} ${row.commissionAmount.toLocaleString()}`
+      }));
+      
+      console.log('Exporting data:', csvData);
+      return csvData;
+    },
+    {
+      onSuccess: () => {
+        console.log('Export completed successfully');
+      },
+      onError: (error) => {
+        console.error('Export failed:', error);
+      }
     }
-  };
+  );
 
-  const reportColumns: ColumnDef<FullReportData>[] = [
+  const reportColumns = useMemo<ColumnDef<ReportData>[]>(() => [
     {
       accessorKey: 'websiteId',
       header: 'Website ID',
-      cell: info => <span className="font-mono text-sm">{info.getValue() as string}</span>
+      size: 120,
+      cell: ({ getValue }) => (
+        <span className="font-mono text-sm">{getValue() as string}</span>
+      )
     },
     {
       accessorKey: 'website',
       header: 'Website',
-      cell: info => {
-        const url = info.getValue() as string;
+      size: 200,
+      cell: ({ getValue }) => {
+        const url = getValue() as string;
         return (
-          <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 truncate">
+          <a 
+            href={url} 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="text-blue-600 hover:text-blue-800 truncate block max-w-[180px]"
+            title={url}
+          >
             {url}
           </a>
         );
       }
-      
     },
     {
       accessorKey: 'registrations',
       header: 'Registrations',
-      cell: info => <span className="font-semibold">{(info.getValue() as number).toLocaleString()}</span>
+      size: 120,
+      cell: ({ getValue }) => (
+        <span className="font-semibold">{(getValue() as number).toLocaleString()}</span>
+      )
     },
     {
       accessorKey: 'newDepositors',
       header: 'New depositors',
-      cell: info => <span className="font-semibold text-green-600">{(info.getValue() as number).toLocaleString()}</span>
+      size: 140,
+      cell: ({ getValue }) => (
+        <span className="font-semibold text-green-600">
+          {(getValue() as number).toLocaleString()}
+        </span>
+      )
     },
     {
       accessorKey: 'totalDepositAmount',
       header: 'Total deposit amount',
+      size: 180,
       cell: ({ row }) => (
-        <span className="font-semibold">
-          {filters.currency} {(row.original.totalDepositAmount).toLocaleString()}
-        </span>
+        <CurrencyCell 
+          amount={row.original.totalDepositAmount}
+          currency={filters.currency}
+          colorClass="text-blue-600"
+        />
       )
     },
     {
       accessorKey: 'bonusAmount',
       header: 'Bonus amount',
+      size: 150,
       cell: ({ row }) => (
-        <span className="font-semibold text-orange-600">
-          {filters.currency} {(row.original.bonusAmount).toLocaleString()}
-        </span>
+        <CurrencyCell 
+          amount={row.original.bonusAmount}
+          currency={filters.currency}
+          colorClass="text-orange-600"
+        />
       )
     },
     {
       accessorKey: 'companyProfit',
       header: 'Company profit (total)',
+      size: 180,
       cell: ({ row }) => (
-        <span className="font-semibold text-purple-600">
-          {filters.currency} {(row.original.companyProfit).toLocaleString()}
-        </span>
+        <CurrencyCell 
+          amount={row.original.companyProfit}
+          currency={filters.currency}
+          colorClass="text-purple-600"
+        />
       )
     },
     {
       accessorKey: 'commissionAmount',
       header: 'Commission amount',
+      size: 170,
       cell: ({ row }) => (
-        <span className="font-semibold text-blue-600">
-          {filters.currency} {(row.original.commissionAmount).toLocaleString()}
-        </span>
+        <CurrencyCell 
+          amount={row.original.commissionAmount}
+          currency={filters.currency}
+          colorClass="text-blue-600"
+        />
       )
     }
-  ];
-  
+  ], [filters.currency]); 
 
   return (
     <div className="space-y-6">
-      <Card padding="md">
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
-          <div className="md:col-span-4">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <Select label="Currency" value={filters.currency} onChange={(e) => updateFilter('currency', e.target.value)} options={CURRENCIES} />
-              <Select label="Website" value={filters.website} onChange={(e) => updateFilter('website', e.target.value)} options={['All', ...WEBSITE_URLS]} />
-              <Input label="Marketing tool ID" value={filters.marketingToolId} onChange={(e) => updateFilter('marketingToolId', e.target.value)} />
-              <Select label="Time interval" value={filters.timeInterval} onChange={(e) => updateFilter('timeInterval', e.target.value)} options={TIME_INTERVALS} />
-            </div>
-          </div>
-
-          <div className="md:col-span-1">
-            <div className="space-y-2">
-              <Input label="Date Range" type="date" value={filters.dateFrom} onChange={(e) => updateFilter('dateFrom', e.target.value)} />
-              <div className="text-center"><Icon name="fas fa-arrow-down" className="text-gray-400" size="xs" /></div>
-              <Input type="date" value={filters.dateTo} onChange={(e) => updateFilter('dateTo', e.target.value)} />
-            </div>
-          </div>
-
-          <div className="md:col-span-1">
-            <Select label="Registration Source" value={filters.registrationSource} onChange={(e) => updateFilter('registrationSource', e.target.value)} options={REGISTRATION_SOURCES} />
-          </div>
-        </div>
-
-        <div className="mt-6 flex justify-center">
-          <Button onClick={handleGenerateReport} icon="fas fa-chart-line" loading={loading} size="lg">
-            GENERATE REPORT
-          </Button>
-        </div>
-      </Card>
+      <ReportFilters
+        filters={filters}
+        onFilterChange={updateFilter}
+        onApply={applyFilters}
+        onReset={resetFilters}
+        fields={FILTER_FIELDS}
+        isLoading={isApplying}
+        title="Generate Full Report"
+      />
 
       <Card className="overflow-hidden">
         <div className="flex justify-between items-center p-6 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Full Report Data</h3>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">Full Report Data</h3>
+            <p className="text-sm text-gray-500 mt-1">
+              {reportData.length} record{reportData.length !== 1 ? 's' : ''} found
+            </p>
+          </div>
+          
           <div className="flex items-center space-x-4">
-            <div className="text-sm text-gray-500">{reportData.length} items selected</div>
-            <Button variant="secondary" icon="fas fa-download">EXPORT</Button>
+            {reportData.length > 0 && (
+              <>
+                <div className="text-sm text-gray-500">
+                  Last updated: {new Date().toLocaleDateString()}
+                </div>
+                <Button 
+                  variant="secondary" 
+                  icon="fas fa-download"
+                  onClick={handleExport}
+                  loading={isExporting}
+                  disabled={isExporting}
+                >
+                  {isExporting ? 'EXPORTING...' : 'EXPORT'}
+                </Button>
+              </>
+            )}
           </div>
         </div>
 
@@ -184,9 +255,16 @@ const FullReportPage: React.FC = () => {
           <DataTable
             data={reportData}
             columns={reportColumns}
-            loading={loading}
+            loading={isApplying}
             emptyMessage="No information available. Generate a report to see data."
-            
+            emptyIcon="fas fa-chart-line"
+            enableSorting={true}
+            enableGlobalSearch={true}
+            searchPlaceholder="Search report data..."
+            pageSize={10}
+            showPagination={reportData.length > 10}
+            tableClassName="min-w-full"
+            density="normal"
           />
         </div>
       </Card>

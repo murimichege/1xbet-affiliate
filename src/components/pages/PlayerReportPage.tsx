@@ -1,174 +1,288 @@
-import React, { useState } from 'react';
+// src/components/pages/PlayerReportPage.tsx
+import React, { useMemo } from 'react';
 import { DataTable } from '@/components/common/Datatable';
-import { Card, Button, Select, Input } from '@/components/ui';
-import { FILTER_CONFIGS, MOCK_PLAYER_REPORT_DATA } from '@/data/dummyData';
+import { Card, Button } from '@/components/ui';
+import { CurrencyCell } from '@/components/ui/CurrencyCell';
+import { PlayerIdCell } from '@/components/ui/PlayerIdCell';
+import { CountryCell } from '@/components/ui/CountryCell';
+import { WebsiteCell } from '@/components/ui/WebsiteCell';
+import { ReportFilters } from '@/components/common/ReportFilters';
 import { ColumnDef } from '@tanstack/react-table';
-
-interface PlayerReportData {
-  websiteId: string;
-  website: string;
-  playerId: string;
-  registrationDate: string;
-  country: string;
-  sumOfAllDeposits: number;
-  companyProfit: number;
-}
+import { useFilters } from '@/hooks/useFilters';
+import { useAsyncAction } from '@/hooks/useAsyncAction';
+import { 
+  usePlayerReportData, 
+  PlayerReportData 
+} from '@/hooks/usePlayerReportData';
+import { 
+  INITIAL_PLAYER_FILTERS, 
+  PLAYER_FILTER_FIELDS 
+} from '@/utils/playerReportConfig';
 
 const PlayerReportPage: React.FC = () => {
-  const defaultFilters = FILTER_CONFIGS.player.reduce((acc, config) => {
-    acc[config.name] = config.defaultValue || '';
-    return acc;
-  }, {} as Record<string, string | boolean>);
-
-  const [reportData, setReportData] = useState<PlayerReportData[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [filters, setFilters] = useState(defaultFilters);
-
-  const updateFilter = (key: string, value: string | boolean) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
-  };
-
-  const handleGenerateReport = async () => {
-    setLoading(true);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setReportData(MOCK_PLAYER_REPORT_DATA);
-    } catch (error) {
-      console.error('Error generating report:', error);
-    } finally {
-      setLoading(false);
+  // 🎯 **Reusable Business Logic** - Same pattern as FullReportPage
+  const { 
+    playerData, 
+    setPlayerData, 
+    generateMockPlayerData, 
+    clearPlayerData 
+  } = usePlayerReportData();
+  
+  // 🎯 **DRY Filter Management** - Exact same hook as FullReportPage
+  const {
+    filters,
+    updateFilter,
+    applyFilters,
+    resetFilters,
+    isApplying
+  } = useFilters(INITIAL_PLAYER_FILTERS, {
+    onApply: async (filters) => {
+      const data = await generateMockPlayerData(filters);
+      setPlayerData(data);
+    },
+    onReset: () => {
+      clearPlayerData();
     }
-  };
-  const playerColumns:  ColumnDef<PlayerReportData>[] = [
+  });
+
+  // 🎯 **DRY Async Actions** - Same pattern for export functionality
+  const { execute: handleExport, loading: isExporting } = useAsyncAction(
+    async () => {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const csvData = playerData.map(player => ({
+        'Website ID': player.websiteId,
+        'Website': player.website,
+        'Player ID': player.playerId,
+        'Registration Date': new Date(player.registrationDate).toLocaleDateString(),
+        'Country': player.country,
+        'Sum of All Deposits': `${filters.currency} ${player.sumOfAllDeposits.toLocaleString()}`,
+        'Company Profit': `${filters.currency} ${player.companyProfit.toLocaleString()}`
+      }));
+      
+      console.log('Exporting player data:', csvData);
+      return csvData;
+    },
+    {
+      onSuccess: () => console.log('Player report export completed'),
+      onError: (error) => console.error('Player report export failed:', error)
+    }
+  );
+
+  // 🎯 **Advanced Analytics Hook** - Value-added functionality
+  const playerAnalytics = useMemo(() => {
+    if (playerData.length === 0) return null;
+
+    const totalDeposits = playerData.reduce((sum, player) => sum + player.sumOfAllDeposits, 0);
+    const totalProfit = playerData.reduce((sum, player) => sum + player.companyProfit, 0);
+    const avgDepositPerPlayer = totalDeposits / playerData.length;
+    const avgProfitPerPlayer = totalProfit / playerData.length;
+    const profitMargin = totalDeposits > 0 ? (totalProfit / totalDeposits) * 100 : 0;
+    
+    const topPlayer = playerData.reduce((top, current) => 
+      current.sumOfAllDeposits > top.sumOfAllDeposits ? current : top
+    );
+
+    return {
+      totalPlayers: playerData.length,
+      totalDeposits,
+      totalProfit,
+      avgDepositPerPlayer,
+      avgProfitPerPlayer,
+      profitMargin,
+      topPlayer
+    };
+  }, [playerData]);
+
+  // 🎯 **Memoized Columns** - Performance optimized, only recreates when currency changes
+  const playerColumns = useMemo<ColumnDef<PlayerReportData>[]>(() => [
     {
       accessorKey: 'websiteId',
       header: 'Website ID',
-      cell: info => <span className="font-mono text-sm">{info.getValue() as string}</span>
+      size: 120,
+      cell: ({ getValue }) => (
+        <span className="font-mono text-sm text-gray-600">
+          {getValue() as string}
+        </span>
+      )
     },
     {
       accessorKey: 'website',
       header: 'Website',
-      cell: info => (
-        <a
-          href={info.getValue() as string}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-blue-600 hover:text-blue-800 truncate"
-        >
-          {info.getValue() as string}
-        </a>
+      size: 200,
+      cell: ({ getValue }) => (
+        <WebsiteCell url={getValue() as string} maxLength={30} />
       )
     },
     {
       accessorKey: 'playerId',
       header: 'Player ID',
-      cell: info => <span className="font-mono text-sm font-semibold">{info.getValue() as string}</span>
+      size: 120,
+      cell: ({ getValue }) => (
+        <PlayerIdCell playerId={getValue() as string} />
+      )
     },
     {
       accessorKey: 'registrationDate',
       header: 'Registration Date',
-      cell: info => new Date(info.getValue() as string).toLocaleDateString()
+      size: 150,
+      cell: ({ getValue }) => {
+        const date = new Date(getValue() as string);
+        return (
+          <span className="text-sm text-gray-700">
+            {date.toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric'
+            })}
+          </span>
+        );
+      }
     },
     {
       accessorKey: 'country',
       header: 'Country',
-      cell: info => (
-        <div className="flex items-center space-x-2">
-          <span className="text-lg">🌍</span>
-          <span>{info.getValue() as string}</span>
-        </div>
+      size: 140,
+      cell: ({ getValue }) => (
+        <CountryCell country={getValue() as string} />
       )
     },
     {
       accessorKey: 'sumOfAllDeposits',
       header: 'Sum of All Deposits',
-      cell: info => (
-        <span className="font-semibold text-green-600">
-          KES {(info.getValue() as number).toLocaleString()}
-        </span>
+      size: 180,
+      cell: ({ row }) => (
+        <CurrencyCell 
+          amount={row.original.sumOfAllDeposits}
+          currency={filters.currency}
+          colorClass="text-green-600"
+        />
       )
     },
     {
       accessorKey: 'companyProfit',
       header: 'Company Profit (Total)',
-      cell: info => (
-        <span className="font-semibold text-purple-600">
-          KES {(info.getValue() as number).toLocaleString()}
-        </span>
+      size: 180,
+      cell: ({ row }) => (
+        <CurrencyCell 
+          amount={row.original.companyProfit}
+          currency={filters.currency}
+          colorClass="text-purple-600"
+        />
       )
     }
-  ];
-  
+  ], [filters.currency]);
 
   return (
     <div className="space-y-6">
-      <Card padding="md">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {FILTER_CONFIGS.player.map(config => {
-            const { type, label, name, options, placeholder } = config;
-            if (type === 'select') {
-              return (
-                <Select
-                  key={name}
-                  label={label}
-                  value={filters[name] as string}
-                  onChange={(e) => updateFilter(name, e.target.value)}
-                  options={options || []}
-                  />
-              );
-            } else if (type === 'text') {
-              return (
-                <Input
-                  key={name}
-                  label={label}
-                  type="text"
-                  placeholder={placeholder}
-                  value={filters[name] as string}
-                  onChange={(e) => updateFilter(name, e.target.value)}
-                />
-              );
-            } else if (type === 'checkbox') {
-              return (
-                <div key={name} className="flex items-center mt-6">
-                  <input
-                    type="checkbox"
-                    id={name}
-                    checked={Boolean(filters[name])}
-                    onChange={(e) => updateFilter(name, e.target.checked)}
-                    className="rounded"
-                  />
-                  <label htmlFor={name} className="ml-2 text-sm text-gray-700">
-                    {label}
-                  </label>
-                </div>
-              );
-            }
-            return null;
-          })}
-        </div>
+      {/* 🎯 **Reusable Filter Component** - Same as FullReportPage */}
+      <ReportFilters
+        filters={filters}
+        onFilterChange={updateFilter}
+        onApply={applyFilters}
+        onReset={resetFilters}
+        fields={PLAYER_FILTER_FIELDS}
+        isLoading={isApplying}
+        title="Generate Player Report"
+      />
 
-        <div className="mt-6 flex justify-center">
-          <Button onClick={handleGenerateReport} icon="fas fa-chart-line" loading={loading} size="lg">
-            GENERATE REPORT
-          </Button>
-        </div>
-      </Card>
+      {/* 🎯 **Analytics Summary Card** - Value-added insights */}
+      {playerAnalytics && (
+        <Card padding="md">
+          <h4 className="text-lg font-semibold text-gray-900 mb-4">Report Summary</h4>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            <div className="text-center p-3 bg-blue-50 rounded-lg">
+              <div className="text-2xl font-bold text-blue-600">
+                {playerAnalytics.totalPlayers}
+              </div>
+              <div className="text-sm text-gray-600">Total Players</div>
+            </div>
+            
+            <div className="text-center p-3 bg-green-50 rounded-lg">
+              <div className="text-2xl font-bold text-green-600">
+                {filters.currency} {playerAnalytics.totalDeposits.toLocaleString()}
+              </div>
+              <div className="text-sm text-gray-600">Total Deposits</div>
+            </div>
+            
+            <div className="text-center p-3 bg-purple-50 rounded-lg">
+              <div className="text-2xl font-bold text-purple-600">
+                {filters.currency} {playerAnalytics.totalProfit.toLocaleString()}
+              </div>
+              <div className="text-sm text-gray-600">Total Profit</div>
+            </div>
+            
+            <div className="text-center p-3 bg-orange-50 rounded-lg">
+              <div className="text-2xl font-bold text-orange-600">
+                {playerAnalytics.profitMargin.toFixed(1)}%
+              </div>
+              <div className="text-sm text-gray-600">Profit Margin</div>
+            </div>
+            
+            <div className="text-center p-3 bg-cyan-50 rounded-lg">
+              <div className="text-2xl font-bold text-cyan-600">
+                {filters.currency} {Math.round(playerAnalytics.avgDepositPerPlayer).toLocaleString()}
+              </div>
+              <div className="text-sm text-gray-600">Avg Deposit</div>
+            </div>
+            
+            <div className="text-center p-3 bg-indigo-50 rounded-lg">
+              <div className="text-xl font-bold text-indigo-600">
+                {playerAnalytics.topPlayer.playerId}
+              </div>
+              <div className="text-sm text-gray-600">Top Player</div>
+            </div>
+          </div>
+        </Card>
+      )}
 
+      {/* 🎯 **Results Section** - Enhanced with better UX */}
       <Card className="overflow-hidden">
         <div className="flex justify-between items-center p-6 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Player Report Data</h3>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">Player Report Data</h3>
+            <p className="text-sm text-gray-500 mt-1">
+              {playerData.length > 0 
+                ? `${playerData.length} player${playerData.length !== 1 ? 's' : ''} found` 
+                : 'No players found with current filters'
+              }
+            </p>
+          </div>
+          
           <div className="flex items-center space-x-4">
-            <div className="text-sm text-gray-500">{reportData.length} items selected</div>
-            <Button variant="secondary" icon="fas fa-download">EXPORT</Button>
+            {playerData.length > 0 && (
+              <>
+                <div className="text-sm text-gray-500">
+                  Filter: {filters.country !== 'Select...' ? filters.country : 'All Countries'}
+                </div>
+                <Button 
+                  variant="secondary" 
+                  icon="fas fa-download"
+                  onClick={handleExport}
+                  loading={isExporting}
+                  disabled={isExporting}
+                >
+                  {isExporting ? 'EXPORTING...' : 'EXPORT'}
+                </Button>
+              </>
+            )}
           </div>
         </div>
+
         <div className="p-6">
           <DataTable
-            data={reportData}
+            data={playerData}
             columns={playerColumns}
-            loading={loading}
+            loading={isApplying}
             emptyMessage="No information available. Generate a report to see player data."
-            
+            emptyIcon="fas fa-users"
+            enableSorting={true}
+            enableGlobalSearch={true}
+            searchPlaceholder="Search players by ID, country, or website..."
+            pageSize={15}
+            showPagination={playerData.length > 15}
+            tableClassName="min-w-full"
+            density="normal"
           />
         </div>
       </Card>
