@@ -71,3 +71,39 @@ export const PLAYER_FILTER_FIELDS: FilterField[] = [
     options: REGISTRATION_SOURCES
   }
 ];
+export const SUMMARY_FILTER_FIELDS: FilterField[] = [
+  {
+    key: 'currency',
+    label: 'Currency',
+    type: 'select',
+    options: ['USD', 'EUR', 'GBP', 'BTC']
+  },
+  {
+    key: 'website',
+    label: 'Website',
+    type: 'select',
+    options: ['All', 'https://www.facebook.com/', 'https://sportsnews.com', 'https://betanalysis.com']
+  },
+  {
+    key: 'marketingToolId',
+    label: 'Marketing tool ID',
+    type: 'text',
+    placeholder: 'Enter tool ID'
+  },
+  {
+    key: 'timeInterval',
+    label: 'Time interval',
+    type: 'select',
+    options: ['Exact period', 'Last 7 days', 'Last 30 days', 'This month', 'Last month']
+  },
+  {
+    key: 'dateFrom',
+    label: 'From',
+    type: 'date'
+  },
+  {
+    key: 'dateTo',
+    label: 'To',
+    type: 'date'
+  }
+];
