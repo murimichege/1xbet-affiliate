@@ -4,9 +4,7 @@ import {
   CURRENCIES, 
   WEBSITE_URLS, 
   TIME_INTERVALS, 
-  REGISTRATION_SOURCES,
-  CAMPAIGNS 
-} from '@/data/dummyData';
+  REGISTRATION_SOURCES} from '@/data/dummyData';
 
 export const INITIAL_PLAYER_FILTERS: PlayerReportFilters = {
   currency: 'USD',

@@ -44,7 +44,6 @@ const PlayerReportPage: React.FC = () => {
     }
   });
 
-  // 🎯 **Enhanced Filter Fields** - Dynamic country options from API
   const enhancedFilterFields = useMemo(() => {
     return PLAYER_FILTER_FIELDS.map(field => {
       if (field.key === 'country') {
@@ -57,7 +56,6 @@ const PlayerReportPage: React.FC = () => {
     });
   }, [countries]);
 
-  // 🎯 **DRY Async Actions** - Same pattern for export functionality
   const { execute: handleExport, loading: isExporting } = useAsyncAction(
     async () => {
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -81,43 +79,6 @@ const PlayerReportPage: React.FC = () => {
     }
   );
 
-  // 🎯 **Enhanced Analytics** - Now includes country distribution
-  const playerAnalytics = useMemo(() => {
-    if (playerData.length === 0) return null;
-
-    const totalDeposits = playerData.reduce((sum, player) => sum + player.sumOfAllDeposits, 0);
-    const totalProfit = playerData.reduce((sum, player) => sum + player.companyProfit, 0);
-    const avgDepositPerPlayer = totalDeposits / playerData.length;
-    const avgProfitPerPlayer = totalProfit / playerData.length;
-    const profitMargin = totalDeposits > 0 ? (totalProfit / totalDeposits) * 100 : 0;
-    
-    const topPlayer = playerData.reduce((top, current) => 
-      current.sumOfAllDeposits > top.sumOfAllDeposits ? current : top
-    );
-
-    // Country distribution analysis
-    const countryDistribution = playerData.reduce((acc, player) => {
-      acc[player.country] = (acc[player.country] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-
-    const topCountry = Object.entries(countryDistribution)
-      .sort(([,a], [,b]) => b - a)[0];
-
-    return {
-      totalPlayers: playerData.length,
-      totalDeposits,
-      totalProfit,
-      avgDepositPerPlayer,
-      avgProfitPerPlayer,
-      profitMargin,
-      topPlayer,
-      countryDistribution,
-      topCountry: topCountry ? { name: topCountry[0], count: topCountry[1] } : null
-    };
-  }, [playerData]);
-
-  // 🎯 **Memoized Columns** - Simplified country display
   const playerColumns = useMemo<ColumnDef<PlayerReportData>[]>(() => [
     {
       accessorKey: 'websiteId',
@@ -208,7 +169,6 @@ const PlayerReportPage: React.FC = () => {
         </Card>
       )}
 
-      {/* 🎯 **Enhanced Filter Component** - Now with API countries */}
       <ReportFilters
         filters={filters}
         onFilterChange={updateFilter}

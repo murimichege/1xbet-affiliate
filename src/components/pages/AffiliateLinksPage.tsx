@@ -53,13 +53,10 @@ const FORM_FIELDS: FormFieldConfig[] = [
 const AffiliateLinksPage: React.FC = () => {
   const [links, setLinks] = useState<AffiliateLink[]>(AFFILIATE_LINKS);
 
-  // 🎯 **DRY Form Management**
   const { values: formData, updateValue, reset } = useForm(INITIAL_FORM_DATA);
 
-  // 🎯 **DRY Async Action**
   const { execute: generateLink, loading } = useAsyncAction(
     async () => {
-      // 🔄 Simulate API call with 1000ms delay
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       const newLink: AffiliateLink = {
@@ -81,7 +78,6 @@ const AffiliateLinksPage: React.FC = () => {
     }
   );
 
-  // 🎯 **Reusable Field Renderer - DRY Principle**
   const renderFormField = (field: FormFieldConfig) => {
     const value = formData[field.key];
 
@@ -109,7 +105,6 @@ const AffiliateLinksPage: React.FC = () => {
     );
   };
 
-  // 🎯 **Status Toggle Handler**
   const handleToggleStatus = (linkId: string) => {
     setLinks(prev =>
       prev.map(link =>
@@ -120,7 +115,6 @@ const AffiliateLinksPage: React.FC = () => {
     );
   };
 
-  // 🎯 **Memoized Columns** - Performance optimized
   const linkColumns = useMemo<ColumnDef<AffiliateLink>[]>(() => [
     {
       accessorKey: 'id',

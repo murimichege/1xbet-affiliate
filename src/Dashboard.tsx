@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import { useSidebar } from '@/hooks';
 import { Header, Footer, Sidebar } from './components/layout';
 import { Card, Icon } from '@/components/ui';
@@ -16,33 +17,11 @@ import {
 import { NAVIGATION_ITEMS, MARKETING_ITEMS, REPORT_ITEMS } from '@/utils/constants';
 
 const Dashboard: React.FC = () => {
-  const { sidebarOpen, setSidebarOpen } = useSidebar();
-  const [activeTab, setActiveTab] = useState('main');
-
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'main':
-        return <MainPage />;
-      case 'websites':
-        return <WebsitesPage />;
-      case 'payments':
-        return <PaymentsPage />;
-      case 'affiliate-links':
-        return <AffiliateLinksPage />;
-      case 'commission':
-        return <CommissionStructurePage />;
-      case 'promo-codes':
-        return <PromoCodesPage />;
-      case 'summary':
-        return <SummaryPage />;
-      case 'full-report':
-        return <FullReportPage />;
-      case 'player-report':
-        return <PlayerReportPage />;
-      default:
-        return <ComingSoonPage title="Page Not Found" />;
-    }
-  };
+  const { sidebarOpen, setSidebarOpen, toggleSidebar } = useSidebar();
+  const location = useLocation();
+  
+  // Extract current tab from pathname
+  const activeTab = location.pathname === '/' ? 'main' : location.pathname.slice(1);
 
   const ComingSoonPage: React.FC<{ title: string }> = ({ title }) => (
     <Card className="p-8 text-center">
@@ -54,6 +33,10 @@ const Dashboard: React.FC = () => {
         This section is under development.
       </p>
     </Card>
+  );
+
+  const NotFoundPage: React.FC = () => (
+    <ComingSoonPage title="Page Not Found" />
   );
 
   return (
@@ -69,9 +52,9 @@ const Dashboard: React.FC = () => {
           marketingItems={MARKETING_ITEMS}
           reportItems={REPORT_ITEMS}
           activeTab={activeTab}
-          onTabChange={setActiveTab}
           sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}
+          toggleSidebar={toggleSidebar}
         />
 
         <div
@@ -86,7 +69,18 @@ const Dashboard: React.FC = () => {
           />
 
           <main className="flex-1 overflow-x-hidden overflow-y-auto p-6">
-            {renderContent()}
+            <Routes>
+              <Route path="/" element={<MainPage />} />
+              <Route path="/websites" element={<WebsitesPage />} />
+              <Route path="/payments" element={<PaymentsPage />} />
+              <Route path="/affiliate-links" element={<AffiliateLinksPage />} />
+              <Route path="/commission" element={<CommissionStructurePage />} />
+              <Route path="/promo-codes" element={<PromoCodesPage />} />
+              <Route path="/summary" element={<SummaryPage />} />
+              <Route path="/full-report" element={<FullReportPage />} />
+              <Route path="/player-report" element={<PlayerReportPage />} />
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
           </main>
         </div>
       </div>

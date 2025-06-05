@@ -1,4 +1,5 @@
 import React from 'react';
+import { NavLink } from 'react-router-dom';
 import { NavigationItem } from '@/types/common';
 import { Button, Icon } from '../ui';
 
@@ -7,9 +8,9 @@ interface SidebarProps {
   marketingItems: NavigationItem[];
   reportItems: NavigationItem[];
   activeTab: string;
-  onTabChange: (tab: string) => void;
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
+  toggleSidebar: () => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -17,9 +18,9 @@ const Sidebar: React.FC<SidebarProps> = ({
   marketingItems,
   reportItems,
   activeTab,
-  onTabChange,
   sidebarOpen,
   setSidebarOpen,
+  toggleSidebar,
 }) => {
   const NavSection: React.FC<{
     title: string;
@@ -32,36 +33,46 @@ const Sidebar: React.FC<SidebarProps> = ({
         </h3>
       )}
       <div className="space-y-1">
-        {items.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => {
-              onTabChange(item.id);
-              if (window.innerWidth < 1024) setSidebarOpen(false);
-            }}
-            className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 group ${
-              activeTab === item.id
-                ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700 shadow-sm'
-                : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-            }`}
-            title={!sidebarOpen ? item.label : undefined}
-          >
-            <Icon
-              name={item.icon}
-              className={`w-5 h-5 ${sidebarOpen ? 'mr-3' : 'mx-auto'} transition-colors ${
-                activeTab === item.id ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'
-              }`}
-            />
-            {sidebarOpen && (
-              <>
-                <span className="truncate">{item.label}</span>
-                {activeTab === item.id && (
-                  <div className="ml-auto w-2 h-2 bg-blue-600 rounded-full"></div>
-                )}
-              </>
-            )}
-          </button>
-        ))}
+        {items.map((item) => {
+          const path = item.id === 'main' ? '/' : `/${item.id}`;
+          
+          return (
+            <NavLink
+              key={item.id}
+              to={path}
+              onClick={() => {
+                if (window.innerWidth < 1024) setSidebarOpen(false);
+              }}
+              className={({ isActive }) =>
+                `w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 group ${
+                  isActive
+                    ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700 shadow-sm'
+                    : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                }`
+              }
+              title={!sidebarOpen ? item.label : undefined}
+            >
+              {({ isActive }) => (
+                <>
+                  <Icon
+                    name={item.icon}
+                    className={`w-5 h-5 ${sidebarOpen ? 'mr-3' : 'mx-auto'} transition-colors ${
+                      isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'
+                    }`}
+                  />
+                  {sidebarOpen && (
+                    <>
+                      <span className="truncate">{item.label}</span>
+                      {isActive && (
+                        <div className="ml-auto w-2 h-2 bg-blue-600 rounded-full"></div>
+                      )}
+                    </>
+                  )}
+                </>
+              )}
+            </NavLink>
+          );
+        })}
       </div>
     </div>
   );

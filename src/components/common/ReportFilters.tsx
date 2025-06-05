@@ -177,7 +177,7 @@ export const ReportFilters = <T extends Record<string, any>>({
           icon="fas fa-chart-line" 
           loading={isLoading}
           disabled={isLoading}
-          size="lg"
+          size="md"
           className="min-w-[160px]"
         >
           {isLoading ? 'GENERATING...' : 'GENERATE REPORT'}
@@ -188,7 +188,7 @@ export const ReportFilters = <T extends Record<string, any>>({
             variant="secondary" 
             onClick={onReset}
             icon="fas fa-undo"
-            size="lg"
+            size="md"
             disabled={isLoading}
             className="min-w-[120px]"
           >
