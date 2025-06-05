@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { DataTable } from '@/components/common/Datatable';
 import { Card, Button, Icon, Select, Input } from '@/components/ui';
-import { TableColumn } from '@/types/common';
-import { 
-  FILTER_CONFIGS, 
-  CURRENCIES, 
-  WEBSITE_URLS, 
-  TIME_INTERVALS, 
-  REGISTRATION_SOURCES 
+import { ColumnDef } from '@tanstack/react-table';
+import {
+  FILTER_CONFIGS,
+  CURRENCIES,
+  WEBSITE_URLS,
+  TIME_INTERVALS,
+  REGISTRATION_SOURCES
 } from '@/data/dummyData';
 
 interface FullReportData {
@@ -21,11 +21,7 @@ interface FullReportData {
   commissionAmount: number;
 }
 
-interface FullReportPageProps {
-  darkMode: boolean;
-}
-
-const FullReportPage: React.FC<FullReportPageProps> = ({ darkMode }) => {
+const FullReportPage: React.FC = () => {
   const [reportData, setReportData] = useState<FullReportData[]>([]);
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState({
@@ -38,93 +34,36 @@ const FullReportPage: React.FC<FullReportPageProps> = ({ darkMode }) => {
     registrationSource: 'Select...'
   });
 
-  const reportFilters = FILTER_CONFIGS.report;
-
-  const reportColumns: TableColumn<FullReportData>[] = [
-    {
-      key: 'websiteId',
-      header: 'Website ID',
-      sortable: true,
-      width: 'w-24',
-      render: (value) => (
-        <span className="font-mono text-sm">{value}</span>
-      )
-    },
-    {
-      key: 'website',
-      header: 'Website',
-      sortable: true,
-      render: (value) => (
-        <a href={value} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 truncate">
-          {value}
-        </a>
-      )
-    },
-    {
-      key: 'registrations',
-      header: 'Registrations',
-      sortable: true,
-      width: 'w-24',
-      render: (value) => (
-        <span className="font-semibold">{value.toLocaleString()}</span>
-      )
-    },
-    {
-      key: 'newDepositors',
-      header: 'New depositors',
-      sortable: true,
-      width: 'w-28',
-      render: (value) => (
-        <span className="font-semibold text-green-600">{value.toLocaleString()}</span>
-      )
-    },
-    {
-      key: 'totalDepositAmount',
-      header: 'Total deposit amount',
-      sortable: true,
-      width: 'w-36',
-      render: (value) => (
-        <span className="font-semibold">${value.toLocaleString()}</span>
-      )
-    },
-    {
-      key: 'bonusAmount',
-      header: 'Bonus amount',
-      sortable: true,
-      width: 'w-28',
-      render: (value) => (
-        <span className="font-semibold text-orange-600">${value.toLocaleString()}</span>
-      )
-    },
-    {
-      key: 'companyProfit',
-      header: 'Company profit (total)',
-      sortable: true,
-      width: 'w-36',
-      render: (value) => (
-        <span className="font-semibold text-purple-600">${value.toLocaleString()}</span>
-      )
-    },
-    {
-      key: 'commissionAmount',
-      header: 'Commission amount',
-      sortable: true,
-      width: 'w-32',
-      render: (value) => (
-        <span className="font-semibold text-blue-600">${value.toLocaleString()}</span>
-      )
-    }
-  ];
+  const updateFilter = (key: string, value: string) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
 
   const handleGenerateReport = async () => {
     setLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Generate mock data
-      const mockData: FullReportData[] = [];
-      setReportData(mockData); // Empty for "No information" state as shown in image
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setReportData([
+        {
+          websiteId: '4429642',
+          website: 'https://mysite.com',
+          registrations: 120,
+          newDepositors: 45,
+          totalDepositAmount: 56000,
+          bonusAmount: 8000,
+          companyProfit: 15000,
+          commissionAmount: 5000
+        },
+        {
+          websiteId: '4429643',
+          website: 'https://sportsnews.com',
+          registrations: 98,
+          newDepositors: 30,
+          totalDepositAmount: 42000,
+          bonusAmount: 6000,
+          companyProfit: 11000,
+          commissionAmount: 3000
+        }
+      ]);
     } catch (error) {
       console.error('Error generating report:', error);
     } finally {
@@ -132,204 +71,126 @@ const FullReportPage: React.FC<FullReportPageProps> = ({ darkMode }) => {
     }
   };
 
-  const updateFilter = (key: string, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
-  };
+  const reportColumns: ColumnDef<FullReportData>[] = [
+    {
+      accessorKey: 'websiteId',
+      header: 'Website ID',
+      cell: info => <span className="font-mono text-sm">{info.getValue() as string}</span>
+    },
+    {
+      accessorKey: 'website',
+      header: 'Website',
+      cell: info => {
+        const url = info.getValue() as string;
+        return (
+          <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 truncate">
+            {url}
+          </a>
+        );
+      }
+      
+    },
+    {
+      accessorKey: 'registrations',
+      header: 'Registrations',
+      cell: info => <span className="font-semibold">{(info.getValue() as number).toLocaleString()}</span>
+    },
+    {
+      accessorKey: 'newDepositors',
+      header: 'New depositors',
+      cell: info => <span className="font-semibold text-green-600">{(info.getValue() as number).toLocaleString()}</span>
+    },
+    {
+      accessorKey: 'totalDepositAmount',
+      header: 'Total deposit amount',
+      cell: ({ row }) => (
+        <span className="font-semibold">
+          {filters.currency} {(row.original.totalDepositAmount).toLocaleString()}
+        </span>
+      )
+    },
+    {
+      accessorKey: 'bonusAmount',
+      header: 'Bonus amount',
+      cell: ({ row }) => (
+        <span className="font-semibold text-orange-600">
+          {filters.currency} {(row.original.bonusAmount).toLocaleString()}
+        </span>
+      )
+    },
+    {
+      accessorKey: 'companyProfit',
+      header: 'Company profit (total)',
+      cell: ({ row }) => (
+        <span className="font-semibold text-purple-600">
+          {filters.currency} {(row.original.companyProfit).toLocaleString()}
+        </span>
+      )
+    },
+    {
+      accessorKey: 'commissionAmount',
+      header: 'Commission amount',
+      cell: ({ row }) => (
+        <span className="font-semibold text-blue-600">
+          {filters.currency} {(row.original.commissionAmount).toLocaleString()}
+        </span>
+      )
+    }
+  ];
+  
 
   return (
     <div className="space-y-6">
-      {/* Filters */}
-      <Card darkMode={darkMode} padding="md">
+      <Card padding="md">
         <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
           <div className="md:col-span-4">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <Select
-                label="Currency"
-                value={filters.currency}
-                onChange={(e) => updateFilter('currency', e.target.value)}
-                options={CURRENCIES}
-                darkMode={darkMode}
-              />
-              
-              <Select
-                label="Website"
-                value={filters.website}
-                onChange={(e) => updateFilter('website', e.target.value)}
-                options={['All', ...WEBSITE_URLS]}
-                darkMode={darkMode}
-              />
-              
-              <Input
-                label="Marketing tool ID"
-                type="text"
-                value={filters.marketingToolId}
-                onChange={(e) => updateFilter('marketingToolId', e.target.value)}
-                placeholder="Enter tool ID"
-                darkMode={darkMode}
-              />
-              
-              <Select
-                label="Time interval"
-                value={filters.timeInterval}
-                onChange={(e) => updateFilter('timeInterval', e.target.value)}
-                options={TIME_INTERVALS}
-                darkMode={darkMode}
-              />
-            </div>
-          </div>
-          
-          {/* Date Range */}
-          <div className="md:col-span-1">
-            <div className="space-y-2">
-              <Input
-                label="Date Range"
-                type="date"
-                value={filters.dateFrom}
-                onChange={(e) => updateFilter('dateFrom', e.target.value)}
-                darkMode={darkMode}
-              />
-              <div className="text-center">
-                <Icon name="fas fa-arrow-down" className="text-gray-400" size="xs" />
-              </div>
-              <Input
-                type="date"
-                value={filters.dateTo}
-                onChange={(e) => updateFilter('dateTo', e.target.value)}
-                darkMode={darkMode}
-              />
+              <Select label="Currency" value={filters.currency} onChange={(e) => updateFilter('currency', e.target.value)} options={CURRENCIES} />
+              <Select label="Website" value={filters.website} onChange={(e) => updateFilter('website', e.target.value)} options={['All', ...WEBSITE_URLS]} />
+              <Input label="Marketing tool ID" value={filters.marketingToolId} onChange={(e) => updateFilter('marketingToolId', e.target.value)} />
+              <Select label="Time interval" value={filters.timeInterval} onChange={(e) => updateFilter('timeInterval', e.target.value)} options={TIME_INTERVALS} />
             </div>
           </div>
 
-          {/* Registration Source */}
           <div className="md:col-span-1">
-            <Select
-              label="Registration Source"
-              value={filters.registrationSource}
-              onChange={(e) => updateFilter('registrationSource', e.target.value)}
-              options={REGISTRATION_SOURCES}
-              darkMode={darkMode}
-            />
+            <div className="space-y-2">
+              <Input label="Date Range" type="date" value={filters.dateFrom} onChange={(e) => updateFilter('dateFrom', e.target.value)} />
+              <div className="text-center"><Icon name="fas fa-arrow-down" className="text-gray-400" size="xs" /></div>
+              <Input type="date" value={filters.dateTo} onChange={(e) => updateFilter('dateTo', e.target.value)} />
+            </div>
+          </div>
+
+          <div className="md:col-span-1">
+            <Select label="Registration Source" value={filters.registrationSource} onChange={(e) => updateFilter('registrationSource', e.target.value)} options={REGISTRATION_SOURCES} />
           </div>
         </div>
 
         <div className="mt-6 flex justify-center">
-          <Button 
-            onClick={handleGenerateReport}
-            icon="fas fa-chart-line"
-            loading={loading}
-            size="lg"
-          >
+          <Button onClick={handleGenerateReport} icon="fas fa-chart-line" loading={loading} size="lg">
             GENERATE REPORT
           </Button>
         </div>
       </Card>
 
-      {/* Report Table */}
-      <Card darkMode={darkMode} className="overflow-hidden">
+      <Card className="overflow-hidden">
         <div className="flex justify-between items-center p-6 border-b border-gray-200">
-          <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-            Full Report Data
-          </h3>
+          <h3 className="text-lg font-semibold text-gray-900">Full Report Data</h3>
           <div className="flex items-center space-x-4">
-            <div className="text-sm text-gray-500">
-              8 items selected
-            </div>
-            <Button variant="secondary" icon="fas fa-download">
-              EXPORT
-            </Button>
+            <div className="text-sm text-gray-500">{reportData.length} items selected</div>
+            <Button variant="secondary" icon="fas fa-download">EXPORT</Button>
           </div>
         </div>
-        
+
         <div className="p-6">
-          {loading ? (
-            <div className="space-y-4">
-              <div className="animate-pulse">
-                <div className={`h-12 ${darkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded mb-4`}></div>
-                {[...Array(5)].map((_, i) => (
-                  <div key={i} className={`h-16 ${darkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded mb-2`}></div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <DataTable
-              data={reportData}
-              columns={reportColumns}
-              darkMode={darkMode}
-              emptyMessage="No information available. Generate a report to see data."
-              enableSelection={true}
-            />
-          )}
+          <DataTable
+            data={reportData}
+            columns={reportColumns}
+            loading={loading}
+            emptyMessage="No information available. Generate a report to see data."
+            
+          />
         </div>
       </Card>
-
-      {/* Report Summary */}
-      {reportData.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card darkMode={darkMode} padding="md">
-            <div className="flex items-center space-x-4">
-              <div className="bg-blue-100 p-3 rounded-lg">
-                <Icon name="fas fa-users" color="#2563EB" size="xl" />
-              </div>
-              <div>
-                <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                  {reportData.reduce((sum, item) => sum + item.registrations, 0).toLocaleString()}
-                </p>
-                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                  Total Registrations
-                </p>
-              </div>
-            </div>
-          </Card>
-
-          <Card darkMode={darkMode} padding="md">
-            <div className="flex items-center space-x-4">
-              <div className="bg-green-100 p-3 rounded-lg">
-                <Icon name="fas fa-wallet" color="#16A34A" size="xl" />
-              </div>
-              <div>
-                <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                  {reportData.reduce((sum, item) => sum + item.newDepositors, 0).toLocaleString()}
-                </p>
-                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                  New Depositors
-                </p>
-              </div>
-            </div>
-          </Card>
-
-          <Card darkMode={darkMode} padding="md">
-            <div className="flex items-center space-x-4">
-              <div className="bg-purple-100 p-3 rounded-lg">
-                <Icon name="fas fa-dollar-sign" color="#9333EA" size="xl" />
-              </div>
-              <div>
-                <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                  ${reportData.reduce((sum, item) => sum + item.totalDepositAmount, 0).toLocaleString()}
-                </p>
-                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                  Total Deposits
-                </p>
-              </div>
-            </div>
-          </Card>
-
-          <Card darkMode={darkMode} padding="md">
-            <div className="flex items-center space-x-4">
-              <div className="bg-orange-100 p-3 rounded-lg">
-                <Icon name="fas fa-chart-line" color="#EA580C" size="xl" />
-              </div>
-              <div>
-                <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                  ${reportData.reduce((sum, item) => sum + item.commissionAmount, 0).toLocaleString()}
-                </p>
-                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                  Total Commission
-                </p>
-              </div>
-            </div>
-          </Card>
-        </div>
-      )}
     </div>
   );
 };

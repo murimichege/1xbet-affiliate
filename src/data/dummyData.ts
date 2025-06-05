@@ -1,4 +1,3 @@
-// dummyData.js
 export const WEBSITES = [
     { 
       id: '4429642', 
@@ -21,7 +20,7 @@ export const WEBSITES = [
       url: 'https://betanalysis.com', 
       category: 'Bookmakers and bets', 
       language: 'Spanish', 
-      status: 'hidden', 
+      status: 'active', 
       createdAt: '2025-01-05' 
     }
   ];
@@ -31,7 +30,6 @@ export const WEBSITES = [
       id: '5573518',
       website: 'https://www.facebook.com/',
       landingPage: '/live',
-      subId: '',
       campaign: 'World wide',
       generatedLink: 'https://refpa3267686.top/L?tag=d_4429642m_1599c_&site=4429642&ad=1599',
       currency: 'USD',
@@ -60,71 +58,72 @@ export const WEBSITES = [
   export const PAYMENT_RECORDS = [
     { 
       id: '1', 
-      currency: 'USD', 
+      currency: 'KES', 
       date: '2025-05-15', 
-      payout: 500, 
-      revenue: 1200, 
-      balance: 1247, 
+      payout: 65000, 
+      revenue: 150000, 
+      balance: 153500, 
       status: 'Completed', 
-      method: 'Bank Transfer', 
-      transactionId: 'TXN123456' 
+      method: 'M-Pesa', 
+      transactionId: 'TXN987654' 
     },
     { 
       id: '2', 
-      currency: 'USD', 
+      currency: 'KES', 
       date: '2025-04-15', 
-      payout: 300, 
-      revenue: 800, 
-      balance: 747, 
+      payout: 35000, 
+      revenue: 90000, 
+      balance: 87500, 
       status: 'Completed', 
-      method: 'PayPal', 
-      transactionId: 'TXN123455' 
+      method: 'Bank Transfer', 
+      transactionId: 'TXN987653' 
     },
     { 
       id: '3', 
-      currency: 'USD', 
+      currency: 'KES', 
       date: '2025-03-15', 
-      payout: 250, 
-      revenue: 600, 
-      balance: 447, 
+      payout: 20000, 
+      revenue: 70000, 
+      balance: 67500, 
       status: 'Processing', 
-      method: 'Crypto', 
-      transactionId: 'TXN123454' 
+      method: 'Airtel Money', 
+      transactionId: 'TXN987652' 
     },
     { 
       id: '4', 
-      currency: 'EUR', 
+      currency: 'KES', 
       date: '2025-02-15', 
-      payout: 200, 
-      revenue: 500, 
-      balance: 197, 
+      payout: 15000, 
+      revenue: 50000, 
+      balance: 47000, 
       status: 'Failed', 
-      method: 'Bank Transfer', 
-      transactionId: 'TXN123453' 
+      method: 'M-Pesa', 
+      transactionId: 'TXN987651' 
     }
   ];
+  
   
   export const MAIN_PAGE_STATS = [
     { 
       id: '1', 
       label: 'AVAILABLE TO WITHDRAW', 
-      value: '$1,247', 
-      icon: 'fas fa-dollar-sign', 
-      color: 'text-blue-600', 
-      bgColor: 'bg-blue-50' 
+      value: '0', 
+      icon: 'fas fa-money-bill-wave', 
+      color: 'text-green-600', 
+      bgColor: 'bg-green-50' 
     },
     { 
       id: '2', 
       label: 'YESTERDAY', 
-      value: '$0', 
+      value: '0', 
       icon: 'fas fa-calendar-day', 
-      color: 'text-purple-600', 
-      bgColor: 'bg-purple-50' 
+      color: 'text-blue-600', 
+      bgColor: 'bg-blue-50' 
     },
     { 
       id: '3', 
       label: 'CURRENT MONTH', 
-      value: '$1,247', 
+      value: '0', 
       icon: 'fas fa-chart-line', 
       color: 'text-orange-600', 
       bgColor: 'bg-orange-50' 
@@ -132,21 +131,105 @@ export const WEBSITES = [
     { 
       id: '4', 
       label: '30 DAYS', 
-      value: '$1,247', 
+      value: '0', 
       icon: 'fas fa-calendar-alt', 
-      color: 'text-indigo-600', 
-      bgColor: 'bg-indigo-50' 
+      color: 'text-purple-600', 
+      bgColor: 'bg-purple-50' 
     },
     { 
       id: '5', 
-      label: 'TOTAL', 
-      value: '$2,494', 
-      icon: 'fas fa-chart-bar', 
+      label: 'TOTAL EARNED', 
+      value: '0', 
+      icon: 'fas fa-trophy', 
       color: 'text-cyan-600', 
       bgColor: 'bg-cyan-50' 
     }
+
   ];
-  
+  export const STATS_TABLE_DATA = [
+  {
+    currency: 'KES',
+    views: 28450,
+    clicks: 3240,
+    directLinks: 890,
+    registrations: 156,
+    newDepositors: 89,
+    companyProfit: 245000.50,
+    rs: 18.5,
+    cpa: 1850.00,
+    commissionAmount: 36750.75
+  },
+  {
+    currency: 'USD',
+    views: 15200,
+    clicks: 1890,
+    directLinks: 420,
+    registrations: 78,
+    newDepositors: 45,
+    companyProfit: 18500.25,
+    rs: 12.4,
+    cpa: 125.00,
+    commissionAmount: 2775.50
+  },
+  {
+    currency: 'UGX',
+    views: 12680,
+    clicks: 1456,
+    directLinks: 312,
+    registrations: 62,
+    newDepositors: 34,
+    companyProfit: 8950000.00,
+    rs: 11.5,
+    cpa: 48500.00,
+    commissionAmount: 1342500.00
+  },
+  {
+    currency: 'TZS',
+    views: 9850,
+    clicks: 1124,
+    directLinks: 245,
+    registrations: 48,
+    newDepositors: 28,
+    companyProfit: 12450000.00,
+    rs: 10.2,
+    cpa: 65000.00,
+    commissionAmount: 1867500.00
+  },
+  {
+    currency: 'EUR',
+    views: 5670,
+    clicks: 678,
+    directLinks: 156,
+    registrations: 23,
+    newDepositors: 14,
+    companyProfit: 4250.75,
+    rs: 8.9,
+    cpa: 95.50,
+    commissionAmount: 637.61
+  }
+];
+export const mockCommissions = [
+  {
+      currency: 'USD',
+      structure: 'Refferal',
+      groupName: 'Africa',
+      startDate: '2025-01-01',
+      endDate: '2025-12-31',
+      description: 'Level 1|3%; Negative commission: Yes; (2017-03-20)',
+      id: '',
+      isActive: false
+  },
+  {
+      currency: 'USD',
+      structure: 'Revenue Share',
+      groupName: 'Africa',
+      startDate: '2025-01-01',
+      endDate: '2025-12-31',
+      description: 'Commission percentage: 25%; Negative commission: Yes; Administrator: 0%; MLM calculation type: Revenue; (2016-10-20)',
+      id: '',
+      isActive: false
+  }
+];
   export const RECENT_ACTIVITIES = [
     { 
       action: 'New registration', 
@@ -205,12 +288,6 @@ export const WEBSITES = [
         defaultValue: '/live',
         placeholder: '/live, /sports, /casino'
       },
-      { 
-        label: 'Sub ID', 
-        name: 'subId', 
-        type: 'text',
-        placeholder: 'Optional tracking ID'
-      }
     ],
     
     payment: [
@@ -346,7 +423,7 @@ export const WEBSITES = [
         label: 'Campaign', 
         name: 'campaign', 
         type: 'select', 
-        options: ['Select...', 'World Wide', 'Europe', 'Asia', 'Africa'], 
+        options: ['Select...', 'World Wide', 'Mobile App'], 
         defaultValue: 'Select...' 
       },
       { 
@@ -528,13 +605,7 @@ export const WEBSITES = [
     }
   ];
   
-  // Payment methods and related data
-  export const PAYMENT_METHODS = [
-    { value: 'Bank Transfer', label: 'Bank Transfer', processingTime: '3-5 business days' },
-    { value: 'PayPal', label: 'PayPal', processingTime: '1-2 business days' },
-    { value: 'Skrill', label: 'Skrill', processingTime: '1-2 business days' },
-    { value: 'Crypto', label: 'Cryptocurrency', processingTime: 'Within 24 hours' }
-  ];
+
   
   // Currency options
   export const CURRENCIES = ['USD', 'EUR', 'GBP', 'BTC'];
@@ -564,9 +635,7 @@ export const WEBSITES = [
   // Campaign options
   export const CAMPAIGNS = [
     'World Wide',
-    'Europe',
-    'Asia',
-    'Africa'
+    'Mobile App'
   ];
   
   // Website URLs for forms
@@ -619,3 +688,52 @@ export const WEBSITES = [
     'Active',
     'Hidden'
   ];
+  export const MOCK_PLAYER_REPORT_DATA = [
+    {
+      websiteId: '4429642',
+      website: 'https://mysite.com',
+      playerId: 'KE-001',
+      registrationDate: '2025-06-01',
+      country: 'Kenya',
+      sumOfAllDeposits: 54000,
+      companyProfit: 13500
+    },
+    {
+      websiteId: '4429643',
+      website: 'https://sportsnews.com',
+      playerId: 'KE-002',
+      registrationDate: '2025-06-02',
+      country: 'Kenya',
+      sumOfAllDeposits: 32000,
+      companyProfit: 7500
+    },
+    {
+      websiteId: '4429644',
+      website: 'https://betanalysis.com',
+      playerId: 'KE-003',
+      registrationDate: '2025-06-03',
+      country: 'Kenya',
+      sumOfAllDeposits: 71500,
+      companyProfit: 20000
+    },
+    {
+      websiteId: '4429642',
+      website: 'https://mysite.com',
+      playerId: 'KE-004',
+      registrationDate: '2025-06-03',
+      country: 'Kenya',
+      sumOfAllDeposits: 28000,
+      companyProfit: 6700
+    },
+    {
+      websiteId: '4429643',
+      website: 'https://sportsnews.com',
+      playerId: 'KE-005',
+      registrationDate: '2025-06-04',
+      country: 'Kenya',
+      sumOfAllDeposits: 89000,
+      companyProfit: 22500
+    }
+  ];
+  
+  

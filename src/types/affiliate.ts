@@ -1,12 +1,11 @@
 export interface AffiliateLink {
+    status: string;
     id: string;
     website: string;
     landingPage: string;
-    subId: string;
     campaign: string;
     generatedLink: string;
     currency: string;
-    status: 'active' | 'hidden';
     clicks?: number;
     conversions?: number;
     createdAt: string;
@@ -17,5 +16,4 @@ export interface AffiliateLink {
     currency: string;
     campaign: string;
     landingPage: string;
-    subId?: string;
   }

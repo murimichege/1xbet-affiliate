@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTheme, useSidebar } from '@/hooks';
-import   Header from '@/components/layout/Header';
+import { Header, Footer, Sidebar } from './components/layout';
 import { Card, Icon } from '@/components/ui';
 import { 
   MainPage,
@@ -10,10 +10,10 @@ import {
   PromoCodesPage, 
   SummaryPage, 
   FullReportPage, 
-  PlayerReportPage 
+  PlayerReportPage,
+  CommissionStructurePage
 } from '@/components/pages';
 import { NAVIGATION_ITEMS, MARKETING_ITEMS, REPORT_ITEMS } from '@/utils/constants';
-import Sidebar from './components/layout/Sidebar';
 
 const Dashboard: React.FC = () => {
   const { darkMode, setDarkMode } = useTheme();
@@ -23,38 +23,30 @@ const Dashboard: React.FC = () => {
   const renderContent = () => {
     switch (activeTab) {
       case 'main':
-        return <MainPage darkMode={darkMode} />;
+        return <MainPage />;
       case 'websites':
-        return <WebsitesPage darkMode={darkMode} />;
+        return <WebsitesPage  />;
       case 'payments':
-        return <PaymentsPage darkMode={darkMode} />;
+        return <PaymentsPage  />;
       case 'affiliate-links':
-        return <AffiliateLinksPage darkMode={darkMode} />;
+        return <AffiliateLinksPage />;
+        case 'commission':
+          return <CommissionStructurePage />;
       case 'promo-codes':
-        return <PromoCodesPage darkMode={darkMode} />;
+        return <PromoCodesPage  />;
       case 'summary':
-        return <SummaryPage darkMode={darkMode} />;
+        return <SummaryPage />;
       case 'full-report':
-        return <FullReportPage darkMode={darkMode} />;
+        return <FullReportPage />;
       case 'player-report':
-        return <PlayerReportPage darkMode={darkMode} />;
-      case 'account':
-        return <ComingSoonPage darkMode={darkMode} title="Account Settings" />;
-      case 'contacts':
-        return <ComingSoonPage darkMode={darkMode} title="Contacts" />;
-      case 'media':
-        return <ComingSoonPage darkMode={darkMode} title="Media Library" />;
-      case 'marketing-tools':
-        return <ComingSoonPage darkMode={darkMode} title="Marketing Tools" />;
-      case 'sub-affiliate':
-        return <ComingSoonPage darkMode={darkMode} title="Sub-affiliate Report" />;
+        return <PlayerReportPage />;
       default:
-        return <ComingSoonPage darkMode={darkMode} title="Page Not Found" />;
+        return <ComingSoonPage  title="Page Not Found" />;
     }
   };
 
   // Coming Soon Component for unimplemented pages
-  const ComingSoonPage: React.FC<{ darkMode: boolean; title: string }> = ({ darkMode, title }) => (
+  const ComingSoonPage: React.FC<{  title: string }> = ({ title }) => (
     <Card darkMode={darkMode} className="p-8 text-center">
       <Icon name="fas fa-construction" className="text-4xl text-gray-400 mb-4" />
       <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'} mb-2`}>
@@ -67,14 +59,15 @@ const Dashboard: React.FC = () => {
   );
 
   return (
-    <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+    <div className={`min-h-screen flex flex-col ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
       {/* Font Awesome CDN */}
       <link
         rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
       />
       
-      <div className="flex">
+      {/* Main layout container - takes remaining height */}
+      <div className="flex flex-1">
         <Sidebar
           navigationItems={NAVIGATION_ITEMS}
           marketingItems={MARKETING_ITEMS}
@@ -86,18 +79,28 @@ const Dashboard: React.FC = () => {
           darkMode={darkMode}
         />
         
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <Header
+        {/* Main content area with proper margin for sidebar */}
+        <div className={`flex-1 flex flex-col transition-all duration-300 ${
+          sidebarOpen ? 'lg:ml-64' : 'lg:ml-16'
+        }`}>
+          <Header 
             activeTab={activeTab}
             setSidebarOpen={setSidebarOpen}
+            sidebarOpen={sidebarOpen}
             darkMode={darkMode}
-            setDarkMode={setDarkMode}
           />
           
           <main className="flex-1 overflow-x-hidden overflow-y-auto p-6">
             {renderContent()}
           </main>
         </div>
+      </div>
+
+      {/* Footer with proper sidebar adjustment */}
+      <div className={`transition-all duration-300 ${
+        sidebarOpen ? 'lg:ml-64' : 'lg:ml-16'
+      }`}>
+        <Footer darkMode={darkMode} />
       </div>
 
       {/* Sidebar overlay for mobile */}

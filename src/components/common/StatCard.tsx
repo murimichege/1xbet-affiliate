@@ -34,21 +34,13 @@ const StatCard: React.FC<StatCardProps> = ({
             </div>
           ) : (
             <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-              {data.value}
+              $ {data.value}
             </p>
           )}
         </div>
         <div className={`${data.color} ${data.bgColor} p-3 rounded-lg flex-shrink-0`}>
           <Icon name={data.icon} className="text-xl" />
         </div>
-      </div>
-      
-      {/* Optional trend indicator */}
-      <div className="mt-4 flex items-center">
-        <Icon name="fas fa-arrow-up" className="text-green-500 text-sm mr-1" />
-        <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-          +12% from last month
-        </span>
       </div>
     </Card>
   );

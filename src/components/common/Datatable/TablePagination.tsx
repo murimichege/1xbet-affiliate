@@ -4,13 +4,11 @@ import { Button, Icon } from '@/components/ui';
 
 interface TablePaginationProps<T> {
   table: Table<T>;
-  darkMode: boolean;
   pageSizeOptions: number[];
 }
 
 export function TablePagination<T>({ 
   table, 
-  darkMode, 
   pageSizeOptions 
 }: TablePaginationProps<T>) {
   const currentPage = table.getState().pagination.pageIndex;
@@ -18,7 +16,6 @@ export function TablePagination<T>({
   const pageSize = table.getState().pagination.pageSize;
   const totalRows = table.getFilteredRowModel().rows.length;
 
-  // Calculate page range for display
   const getPageNumbers = () => {
     const delta = 2;
     const range = [];
@@ -55,17 +52,11 @@ export function TablePagination<T>({
     <div className="flex items-center justify-between px-2">
       {/* Items per page */}
       <div className="flex items-center space-x-2">
-        <span className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-          Show
-        </span>
+        <span className="text-sm text-gray-700">Show</span>
         <select
           value={pageSize}
           onChange={(e) => table.setPageSize(Number(e.target.value))}
-          className={`px-2 py-1 border rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-            darkMode 
-              ? 'bg-gray-700 border-gray-600 text-white' 
-              : 'bg-white border-gray-300'
-          }`}
+          className="px-2 py-1 border rounded bg-white border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         >
           {pageSizeOptions.map(size => (
             <option key={size} value={size}>
@@ -73,18 +64,16 @@ export function TablePagination<T>({
             </option>
           ))}
         </select>
-        <span className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-          entries
-        </span>
+        <span className="text-sm text-gray-700">entries</span>
       </div>
 
       {/* Page info */}
-      <div className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+      <div className="text-sm text-gray-700">
         Showing {currentPage * pageSize + 1} to{' '}
         {Math.min((currentPage + 1) * pageSize, totalRows)} of{' '}
         {totalRows} entries
         {table.getFilteredRowModel().rows.length !== table.getCoreRowModel().rows.length && (
-          <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
+          <span className="text-gray-500">
             {' '}(filtered from {table.getCoreRowModel().rows.length} total entries)
           </span>
         )}
@@ -92,7 +81,6 @@ export function TablePagination<T>({
 
       {/* Pagination controls */}
       <div className="flex items-center space-x-1">
-        {/* First page */}
         <Button
           variant="ghost"
           size="sm"
@@ -104,7 +92,6 @@ export function TablePagination<T>({
           <Icon name="fas fa-angle-double-left" />
         </Button>
 
-        {/* Previous page */}
         <Button
           variant="ghost"
           size="sm"
@@ -116,14 +103,11 @@ export function TablePagination<T>({
           <Icon name="fas fa-angle-left" />
         </Button>
 
-        {/* Page numbers */}
         <div className="flex space-x-1">
           {pageNumbers.map((pageNumber, index) => (
             <React.Fragment key={index}>
               {pageNumber === '...' ? (
-                <span className={`px-3 py-2 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                  ...
-                </span>
+                <span className="px-3 py-2 text-sm text-gray-500">...</span>
               ) : (
                 <Button
                   variant={pageNumber === currentPage + 1 ? "primary" : "ghost"}
@@ -138,7 +122,6 @@ export function TablePagination<T>({
           ))}
         </div>
 
-        {/* Next page */}
         <Button
           variant="ghost"
           size="sm"
@@ -150,7 +133,6 @@ export function TablePagination<T>({
           <Icon name="fas fa-angle-right" />
         </Button>
 
-        {/* Last page */}
         <Button
           variant="ghost"
           size="sm"

@@ -62,7 +62,6 @@ function DataTable<T>({
           <input
             type="checkbox"
             checked={table.getIsAllPageRowsSelected()}
-            indeterminate={table.getIsSomePageRowsSelected()}
             onChange={table.getToggleAllPageRowsSelectedHandler()}
             className="rounded focus:ring-2 focus:ring-blue-500"
             aria-label="Select all rows"
@@ -136,7 +135,7 @@ function DataTable<T>({
   const selectedRows = table.getSelectedRowModel().rows.map(row => row.original);
 
   if (loading) {
-    return <LoadingState darkMode={darkMode} />;
+    return <LoadingState />;
   }
 
   return (
@@ -144,7 +143,6 @@ function DataTable<T>({
       {/* Table Controls */}
       <TableControls
         table={table}
-        darkMode={darkMode}
         enableGlobalSearch={enableGlobalSearch}
         searchPlaceholder={searchPlaceholder}
         globalFilter={globalFilter}
@@ -161,12 +159,10 @@ function DataTable<T>({
           <table className={`w-full divide-y divide-gray-200 dark:divide-gray-700 ${tableClassName}`}>
             <TableHeader
               table={table}
-              darkMode={darkMode}
               enableSorting={enableSorting}
             />
             <TableBody
               table={table}
-              darkMode={darkMode}
               onRowClick={onRowClick}
               density={density}
               densityClasses={densityClasses}
@@ -178,7 +174,6 @@ function DataTable<T>({
       {/* Empty State */}
       {data.length === 0 && !loading && (
         <EmptyState
-          darkMode={darkMode}
           message={emptyMessage}
           icon={emptyIcon}
         />
@@ -188,7 +183,6 @@ function DataTable<T>({
       {showPagination && data.length > 0 && (
         <TablePagination
           table={table}
-          darkMode={darkMode}
           pageSizeOptions={pageSizeOptions}
         />
       )}

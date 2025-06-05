@@ -1,15 +1,15 @@
 export interface PaymentRecord {
-    id: string;
-    currency: string;
-    date: string;
-    payout: number;
-    revenue: number;
-    balance: number;
-    status: PaymentStatus;
-    method?: string;
-    transactionId?: string;
-  }
-  
+  id: string;
+  currency: string;
+  date: string;
+  payout: number;
+  revenue: number;
+  balance: number;
+  status: string;
+  method: string;
+  transactionId: string;
+}
+
   export type PaymentStatus = 
     | 'Pending'
     | 'Processing'

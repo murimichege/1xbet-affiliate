@@ -3,7 +3,7 @@ export interface Website {
     url: string;
     category: string;
     language: string;
-    status: 'active' | 'hidden';
+    status: 'active';
     createdAt?: string;
     updatedAt?: string;
   }
@@ -14,7 +14,7 @@ export interface Website {
     language: string;
   }
   
-  export type WebsiteStatus = 'active' | 'hidden';
+  export type WebsiteStatus = 'active';
   export type WebsiteCategory = 
     | 'Sports predictions'
     | 'Sports news'

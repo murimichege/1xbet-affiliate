@@ -5,8 +5,8 @@ function App() {
 
   return (
     <>
-          <div className="App">
-      <Dashboard />
+    <div className="w-full min-h-screen">
+    <Dashboard />
     </div>
     </>
   )
