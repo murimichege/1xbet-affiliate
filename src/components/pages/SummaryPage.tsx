@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Card, Button, Icon } from '@/components/ui';
-import { SummaryReportFilters, FilterField } from '@/components/common/ReportFilters';
+import { SummaryReportFilters } from '@/components/common/ReportFilters';
 import { useFilters } from '@/hooks/useFilters';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { SUMMARY_METRICS } from '@/data/dummyData';
@@ -204,14 +204,6 @@ const SummaryPage: React.FC = () => {
             <p className="text-sm text-gray-500 mb-6 max-w-md mx-auto">
               Configure your filters above and click "Generate Report" to view your summary statistics and detailed metrics.
             </p>
-            <Button 
-              onClick={applyFilters}
-              icon="fas fa-chart-line"
-              loading={isApplying}
-              disabled={isApplying}
-            >
-              {isApplying ? 'GENERATING...' : 'GENERATE REPORT'}
-            </Button>
           </div>
         )}
       </Card>

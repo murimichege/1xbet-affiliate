@@ -61,9 +61,11 @@ export const useSidebar = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [sidebarOpen]);
 
+  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
+
   return { 
     sidebarOpen, 
     setSidebarOpen,
-    toggleSidebar: () => setSidebarOpen(!sidebarOpen)
+    toggleSidebar
   };
 };

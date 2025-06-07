@@ -9,6 +9,8 @@ import { ColumnDef } from '@tanstack/react-table';
 import { useFilters } from '@/hooks/useFilters';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useCountries } from '@/hooks/useCountries'; 
+import { exportToCSV } from '@/utils/csvExport';
+
 import { 
   usePlayerReportData, 
   PlayerReportData 
@@ -44,7 +46,6 @@ const PlayerReportPage: React.FC = () => {
     }
   });
 
-  // 🎯 **Enhanced Filter Fields** - Dynamic country options from API
   const enhancedFilterFields = useMemo(() => {
     return PLAYER_FILTER_FIELDS.map(field => {
       if (field.key === 'country') {
@@ -56,68 +57,29 @@ const PlayerReportPage: React.FC = () => {
       return field;
     });
   }, [countries]);
-
-  // 🎯 **DRY Async Actions** - Same pattern for export functionality
+  
   const { execute: handleExport, loading: isExporting } = useAsyncAction(
     async () => {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const csvData = playerData.map(player => ({
+      if (!playerData.length) return;
+  
+      const rows = playerData.map(player => ({
         'Website ID': player.websiteId,
         'Website': player.website,
         'Player ID': player.playerId,
         'Registration Date': new Date(player.registrationDate).toLocaleDateString(),
         'Country': player.country,
-        'Sum of All Deposits': `${filters.currency} ${player.sumOfAllDeposits.toLocaleString()}`,
-        'Company Profit': `${filters.currency} ${player.companyProfit.toLocaleString()}`
+        'Sum of All Deposits': player.sumOfAllDeposits,
+        'Company Profit': player.companyProfit
       }));
-      
-      console.log('Exporting player data:', csvData);
-      return csvData;
+  
+      exportToCSV(rows, `player-report-${new Date().toISOString().split('T')[0]}`);
     },
     {
       onSuccess: () => console.log('Player report export completed'),
       onError: (error) => console.error('Player report export failed:', error)
     }
   );
-
-  // 🎯 **Enhanced Analytics** - Now includes country distribution
-  const playerAnalytics = useMemo(() => {
-    if (playerData.length === 0) return null;
-
-    const totalDeposits = playerData.reduce((sum, player) => sum + player.sumOfAllDeposits, 0);
-    const totalProfit = playerData.reduce((sum, player) => sum + player.companyProfit, 0);
-    const avgDepositPerPlayer = totalDeposits / playerData.length;
-    const avgProfitPerPlayer = totalProfit / playerData.length;
-    const profitMargin = totalDeposits > 0 ? (totalProfit / totalDeposits) * 100 : 0;
-    
-    const topPlayer = playerData.reduce((top, current) => 
-      current.sumOfAllDeposits > top.sumOfAllDeposits ? current : top
-    );
-
-    // Country distribution analysis
-    const countryDistribution = playerData.reduce((acc, player) => {
-      acc[player.country] = (acc[player.country] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-
-    const topCountry = Object.entries(countryDistribution)
-      .sort(([,a], [,b]) => b - a)[0];
-
-    return {
-      totalPlayers: playerData.length,
-      totalDeposits,
-      totalProfit,
-      avgDepositPerPlayer,
-      avgProfitPerPlayer,
-      profitMargin,
-      topPlayer,
-      countryDistribution,
-      topCountry: topCountry ? { name: topCountry[0], count: topCountry[1] } : null
-    };
-  }, [playerData]);
-
-  // 🎯 **Memoized Columns** - Simplified country display
+  
   const playerColumns = useMemo<ColumnDef<PlayerReportData>[]>(() => [
     {
       accessorKey: 'websiteId',
@@ -208,7 +170,6 @@ const PlayerReportPage: React.FC = () => {
         </Card>
       )}
 
-      {/* 🎯 **Enhanced Filter Component** - Now with API countries */}
       <ReportFilters
         filters={filters}
         onFilterChange={updateFilter}
