@@ -5,6 +5,8 @@ import { PaymentRecord } from '@/types/payments';
 import { formatCurrency, formatDate, getStatusColor } from '@/utils/helpers';
 import { PAYMENT_RECORDS } from '@/data/dummyData';
 import { ColumnDef } from '@tanstack/react-table';
+import { useAsyncAction } from '@/hooks/useAsyncAction';
+import { exportToCSV } from '@/utils/csvExport';
 
 const PaymentsPage: React.FC = () => {
   const paymentColumns: ColumnDef<PaymentRecord>[] = [
@@ -52,16 +54,44 @@ const PaymentsPage: React.FC = () => {
       )
     }
   ];
-
+  const { execute: handleExport, loading: isExporting } = useAsyncAction(
+    async () => {
+      if (!PAYMENT_RECORDS.length) return;
+  
+      const rows = PAYMENT_RECORDS.map((record) => ({
+        'Payout': record.payout,
+        'Revenue': record.revenue,
+        'Balance': record.balance,
+        'Currency': record.currency,
+        'Transaction ID': record.transactionId,
+        'Date': record.date,
+        'Status': record.status
+      }));
+  
+      exportToCSV(rows, `payment-history-${new Date().toISOString().split('T')[0]}`);
+    },
+    {
+      onSuccess: () => console.log('Payment history exported'),
+      onError: (err) => console.error('Export failed:', err)
+    }
+  );
+  
   return (
     <div className="space-y-6">
       <Card className="overflow-hidden">
         <div className="p-6 space-y-6">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-semibold text-gray-900">Payment History</h3>
-            <Button variant="secondary" icon="fas fa-download">
-              EXPORT
-            </Button>
+            <Button
+  icon="fas fa-download"
+  variant="secondary"
+  onClick={handleExport}
+  loading={isExporting}
+  disabled={isExporting}
+>
+  {isExporting ? 'EXPORTING...' : 'EXPORT'}
+</Button>
+
           </div>
 
           <DataTable

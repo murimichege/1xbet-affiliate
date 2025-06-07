@@ -7,6 +7,8 @@ import { ColumnDef } from '@tanstack/react-table';
 import { useFilters } from '@/hooks/useFilters';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useReportData, ReportData, ReportFilters as ReportFiltersType } from '@/hooks/useReportData';
+import { exportToCSV } from '@/utils/csvExport';
+
 import {
   CURRENCIES,
   WEBSITE_URLS,
@@ -86,33 +88,27 @@ const FullReportPage: React.FC = () => {
 
   const { execute: handleExport, loading: isExporting } = useAsyncAction(
     async () => {
-      // Simulate export
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // In real app, this would trigger file download
-      const csvData = reportData.map(row => ({
+      if (!reportData.length) return;
+  
+      const rows = reportData.map(row => ({
         'Website ID': row.websiteId,
         'Website': row.website,
         'Registrations': row.registrations,
         'New Depositors': row.newDepositors,
-        'Total Deposit Amount': `${filters.currency} ${row.totalDepositAmount.toLocaleString()}`,
-        'Bonus Amount': `${filters.currency} ${row.bonusAmount.toLocaleString()}`,
-        'Company Profit': `${filters.currency} ${row.companyProfit.toLocaleString()}`,
-        'Commission Amount': `${filters.currency} ${row.commissionAmount.toLocaleString()}`
+        'Total Deposit Amount': row.totalDepositAmount,
+        'Bonus Amount': row.bonusAmount,
+        'Company Profit': row.companyProfit,
+        'Commission Amount': row.commissionAmount
       }));
-      
-      console.log('Exporting data:', csvData);
-      return csvData;
+  
+      exportToCSV(rows, `full-report-${new Date().toISOString().split('T')[0]}`);
     },
     {
-      onSuccess: () => {
-        console.log('Export completed successfully');
-      },
-      onError: (error) => {
-        console.error('Export failed:', error);
-      }
+      onSuccess: () => console.log('Export completed successfully'),
+      onError: (error) => console.error('Export failed:', error)
     }
   );
+  
 
   const reportColumns = useMemo<ColumnDef<ReportData>[]>(() => [
     {

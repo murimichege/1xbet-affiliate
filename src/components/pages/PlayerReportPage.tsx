@@ -9,6 +9,8 @@ import { ColumnDef } from '@tanstack/react-table';
 import { useFilters } from '@/hooks/useFilters';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useCountries } from '@/hooks/useCountries'; 
+import { exportToCSV } from '@/utils/csvExport';
+
 import { 
   usePlayerReportData, 
   PlayerReportData 
@@ -55,30 +57,29 @@ const PlayerReportPage: React.FC = () => {
       return field;
     });
   }, [countries]);
-
+  
   const { execute: handleExport, loading: isExporting } = useAsyncAction(
     async () => {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const csvData = playerData.map(player => ({
+      if (!playerData.length) return;
+  
+      const rows = playerData.map(player => ({
         'Website ID': player.websiteId,
         'Website': player.website,
         'Player ID': player.playerId,
         'Registration Date': new Date(player.registrationDate).toLocaleDateString(),
         'Country': player.country,
-        'Sum of All Deposits': `${filters.currency} ${player.sumOfAllDeposits.toLocaleString()}`,
-        'Company Profit': `${filters.currency} ${player.companyProfit.toLocaleString()}`
+        'Sum of All Deposits': player.sumOfAllDeposits,
+        'Company Profit': player.companyProfit
       }));
-      
-      console.log('Exporting player data:', csvData);
-      return csvData;
+  
+      exportToCSV(rows, `player-report-${new Date().toISOString().split('T')[0]}`);
     },
     {
       onSuccess: () => console.log('Player report export completed'),
       onError: (error) => console.error('Player report export failed:', error)
     }
   );
-
+  
   const playerColumns = useMemo<ColumnDef<PlayerReportData>[]>(() => [
     {
       accessorKey: 'websiteId',

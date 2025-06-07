@@ -19,7 +19,7 @@ export const useAsyncAction = <T extends any[], R>(
     setError(null);
     
     try {
-      // Simulate minimum loading time for better UX
+      // Simulates minimum loading time for better UX
       const [result] = await Promise.all([
         asyncFn(...args),
         options.loadingDelay ? new Promise(resolve => setTimeout(resolve, options.loadingDelay)) : Promise.resolve()

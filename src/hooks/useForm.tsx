@@ -22,7 +22,7 @@ export const useForm = <T extends Record<string, any>>(
   }, [initialValues]);
 
   const validate = useCallback(() => {
-    // Simple validation - check for required fields
+    // base validation - check for required fields
     return Object.values(values).every(value => 
       value !== '' && value !== null && value !== undefined
     );
