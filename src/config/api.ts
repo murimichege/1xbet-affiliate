@@ -1,49 +1,77 @@
 import axios from 'axios';
+import { Cookies } from 'react-cookie';
 
-const baseURL = import.meta.env.VITE_API_BASE_URL;
+const cookies = new Cookies();
 
+const isLocal = location.hostname === 'localhost';
+const baseURL = isLocal ? '/api' : import.meta.env.VITE_API_BASE_URL;
+const internalApiBaseURL = import.meta.env.VITE_INTERNAL_API_BASE_URL;
+const cookieValue = import.meta.env.VITE_BETKUMI_COOKIE;
+
+// ✅ Set cookie in browser
+cookies.set('ta', cookieValue, {
+  path: '/',
+  secure: true,
+  sameSite: 'Lax',
+  // domain: 'betkumi.co.ke', // only if you're on https://betkumi.co.ke
+});
+
+// ----------------------
+// Betkumi External API
+// ----------------------
 export const apiClient = axios.create({
   baseURL,
+  timeout: 10000,
+  withCredentials: true, // ✅ sends cookies cross-origin or via proxy
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept-Api-Version': '70',
+  },
+});
+
+apiClient.interceptors.response.use(
+  res => res,
+  err => {
+    console.error('Betkumi API Error:', err.response?.data || err.message);
+    return Promise.reject(err);
+  }
+);
+
+// ----------------------
+// Internal API
+// ----------------------
+export const internalApiClient = axios.create({
+  baseURL: internalApiBaseURL,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Attach Bearer token to all api requests
-apiClient.interceptors.request.use((config) => {
+internalApiClient.interceptors.request.use(config => {
   const token = localStorage.getItem('auth_token');
   if (token) {
+    config.headers = config.headers || {};
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
 
-// Handle API errors globally
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    console.error('API Error:', error.response?.data || error.message);
-
-    if (error.response?.status === 401) {
+internalApiClient.interceptors.response.use(
+  res => res,
+  err => {
+    if (err.response?.status === 401) {
       localStorage.removeItem('auth_token');
       window.location.href = '/login';
     }
-
-    return Promise.reject(error);
+    return Promise.reject(err);
   }
 );
 
-// Third-party public API (i.e. countries)
+// ----------------------
+// Country API
+// ----------------------
 export const countryApiClient = axios.create({
   baseURL: 'https://restcountries.com/v3.1',
   timeout: 5000,
 });
-
-countryApiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    console.error('Country API Error:', error.message);
-    return Promise.reject(error);
-  }
-);

@@ -12,8 +12,17 @@ export default defineConfig({
   css: {
     postcss: './postcss.config.js',
   },
-  // Ensure CSS processing
   optimizeDeps: {
-    include: ['tailwindcss', 'autoprefixer']
-  }
+    include: ['tailwindcss', 'autoprefixer'],
+  },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'https://api.betkumi.co.ke',
+        changeOrigin: true,
+        secure: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+    },
+  },
 });
