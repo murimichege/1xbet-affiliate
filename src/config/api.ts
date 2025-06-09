@@ -3,36 +3,57 @@ import { Cookies } from 'react-cookie';
 
 const cookies = new Cookies();
 
-const isLocal = location.hostname === 'localhost';
-const baseURL = isLocal ? '/api' : import.meta.env.VITE_API_BASE_URL;
+const baseURL = '/api';
 const internalApiBaseURL = import.meta.env.VITE_INTERNAL_API_BASE_URL;
 const cookieValue = import.meta.env.VITE_BETKUMI_COOKIE;
+const hostValue = import.meta.env.VITE_HOST;
 
 // ✅ Set cookie in browser
-cookies.set('ta', cookieValue, {
-  path: '/',
-  secure: true,
-  sameSite: 'lax',
-  // domain: 'betkumi.co.ke', // only if you're on https://betkumi.co.ke
-});
+if (cookieValue) {
+  cookies.set('ta', cookieValue, {
+    path: '/',
+    secure: true,
+    sameSite: 'none', // Required for cross-origin
+    // domain: 'betkumi.co.ke', // only if you're on https://betkumi.co.ke
+  });
+}
 
 // ----------------------
-// Betkumi External API
+// Betkumi External API (via proxy)
 // ----------------------
 export const apiClient = axios.create({
   baseURL,
   timeout: 10000,
-  withCredentials: true, //  sends cookies cross-origin or via proxy
+  withCredentials: true, // Important for sending cookies
   headers: {
     'Content-Type': 'application/json',
     'Accept-Api-Version': '70',
   },
 });
 
+// 🔍 REQUEST INTERCEPTOR
+apiClient.interceptors.request.use(config => {
+  // Add the cookie manually to headers as backup
+  if (cookieValue) {
+    config.headers = config.headers || {};
+    config.headers['Cookie'] = `ta=${cookieValue}`;
+  }
+  
+  // Add host header if specified
+  if (hostValue) {
+    config.headers = config.headers || {};
+    config.headers['Host'] = hostValue;
+  }
+  
+  return config;
+});
+
+// 🔍 RESPONSE INTERCEPTOR
 apiClient.interceptors.response.use(
-  res => res,
+  res => {
+    return res;
+  },
   err => {
-    console.error('Betkumi API Error:', err.response?.data || err.message);
     return Promise.reject(err);
   }
 );
@@ -49,11 +70,6 @@ export const internalApiClient = axios.create({
 });
 
 internalApiClient.interceptors.request.use(config => {
-  const token = localStorage.getItem('auth_token');
-  if (token) {
-    config.headers = config.headers || {};
-    config.headers.Authorization = `Bearer ${token}`;
-  }
   return config;
 });
 
@@ -61,7 +77,6 @@ internalApiClient.interceptors.response.use(
   res => res,
   err => {
     if (err.response?.status === 401) {
-      localStorage.removeItem('auth_token');
       window.location.href = '/login';
     }
     return Promise.reject(err);
