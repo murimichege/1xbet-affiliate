@@ -12,7 +12,7 @@ const cookieValue = import.meta.env.VITE_BETKUMI_COOKIE;
 cookies.set('ta', cookieValue, {
   path: '/',
   secure: true,
-  sameSite: 'Lax',
+  sameSite: 'lax',
   // domain: 'betkumi.co.ke', // only if you're on https://betkumi.co.ke
 });
 
@@ -22,7 +22,7 @@ cookies.set('ta', cookieValue, {
 export const apiClient = axios.create({
   baseURL,
   timeout: 10000,
-  withCredentials: true, // ✅ sends cookies cross-origin or via proxy
+  withCredentials: true, //  sends cookies cross-origin or via proxy
   headers: {
     'Content-Type': 'application/json',
     'Accept-Api-Version': '70',

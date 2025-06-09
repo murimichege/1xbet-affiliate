@@ -24,15 +24,17 @@ const Dashboard: React.FC = () => {
   const activeTab = location.pathname === '/' ? 'main' : location.pathname.slice(1);
 
   const ComingSoonPage: React.FC<{ title: string }> = ({ title }) => (
-    <Card className="p-8 text-center">
-      <Icon name="fas fa-construction" className="text-4xl text-gray-400 mb-4" />
-      <h3 className="text-lg font-semibold text-gray-900 mb-2">
-        {title}
-      </h3>
-      <p className="text-gray-600">
-        This section is under development.
-      </p>
-    </Card>
+    <div className="p-4 sm:p-6">
+      <Card className="p-6 sm:p-8 text-center">
+        <Icon name="fas fa-construction" className="text-3xl sm:text-4xl text-gray-400 mb-4" />
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          {title}
+        </h3>
+        <p className="text-gray-600 text-sm sm:text-base">
+          This section is under development.
+        </p>
+      </Card>
+    </div>
   );
 
   const NotFoundPage: React.FC = () => (
@@ -47,8 +49,7 @@ const Dashboard: React.FC = () => {
       />
       <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@6.6.6/css/flag-icons.min.css" />
 
-
-      <div className="flex flex-1">
+      <div className="flex flex-1 relative">
         <Sidebar
           navigationItems={NAVIGATION_ITEMS}
           marketingItems={MARKETING_ITEMS}
@@ -60,7 +61,7 @@ const Dashboard: React.FC = () => {
         />
 
         <div
-          className={`flex-1 flex flex-col transition-all duration-300 ${
+          className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${
             sidebarOpen ? 'lg:ml-64' : 'lg:ml-16'
           }`}
         >
@@ -70,19 +71,23 @@ const Dashboard: React.FC = () => {
             sidebarOpen={sidebarOpen}
           />
 
-          <main className="flex-1 overflow-x-hidden overflow-y-auto p-6">
-            <Routes>
-              <Route path="/" element={<MainPage />} />
-              <Route path="/websites" element={<WebsitesPage />} />
-              <Route path="/payments" element={<PaymentsPage />} />
-              <Route path="/affiliate-links" element={<AffiliateLinksPage />} />
-              <Route path="/commission" element={<CommissionStructurePage />} />
-              <Route path="/promo-codes" element={<PromoCodesPage />} />
-              <Route path="/summary" element={<SummaryPage />} />
-              <Route path="/full-report" element={<FullReportPage />} />
-              <Route path="/player-report" element={<PlayerReportPage />} />
-              <Route path="*" element={<NotFoundPage />} />
-            </Routes>
+          <main className="flex-1 overflow-x-hidden overflow-y-auto">
+            <div className="p-4 sm:p-6 lg:p-6 xl:p-8">
+              <div className="max-w-full">
+                <Routes>
+                  <Route path="/" element={<MainPage />} />
+                  <Route path="/websites" element={<WebsitesPage />} />
+                  <Route path="/payments" element={<PaymentsPage />} />
+                  <Route path="/affiliate-links" element={<AffiliateLinksPage />} />
+                  <Route path="/commission" element={<CommissionStructurePage />} />
+                  <Route path="/promo-codes" element={<PromoCodesPage />} />
+                  <Route path="/summary" element={<SummaryPage />} />
+                  <Route path="/full-report" element={<FullReportPage />} />
+                  <Route path="/player-report" element={<PlayerReportPage />} />
+                  <Route path="*" element={<NotFoundPage />} />
+                </Routes>
+              </div>
+            </div>
           </main>
         </div>
       </div>

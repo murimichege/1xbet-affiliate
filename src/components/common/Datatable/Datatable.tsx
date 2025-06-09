@@ -123,9 +123,9 @@ function DataTable<T>({
 
   // Density classes
   const densityClasses = {
-    compact: 'py-2',
-    normal: 'py-3',
-    comfortable: 'py-4',
+    compact: 'py-1.5 sm:py-2',
+    normal: 'py-2 sm:py-3',
+    comfortable: 'py-3 sm:py-4',
   };
 
   const selectedRowCount = Object.keys(rowSelection).length;
@@ -136,7 +136,7 @@ function DataTable<T>({
   }
 
   return (
-    <div className={`space-y-4 ${className}`}>
+    <div className={`space-y-3 sm:space-y-4 ${className}`}>
       {/* Table Controls */}
       <TableControls
         table={table}
@@ -150,21 +150,23 @@ function DataTable<T>({
         enableActions={enableActions}
       />
 
-      {/* Table */}
+      {/* Table Container - Mobile Responsive */}
       <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
         <div className="overflow-x-auto">
-          <table className={`w-full divide-y divide-gray-200 dark:divide-gray-700 ${tableClassName}`}>
-            <TableHeader
-              table={table}
-              enableSorting={enableSorting}
-            />
-            <TableBody
-              table={table}
-              onRowClick={onRowClick}
-              density={density}
-              densityClasses={densityClasses}
-            />
-          </table>
+          <div className="min-w-full inline-block align-middle">
+            <table className={`w-full divide-y divide-gray-200 dark:divide-gray-700 ${tableClassName}`}>
+              <TableHeader
+                table={table}
+                enableSorting={enableSorting}
+              />
+              <TableBody
+                table={table}
+                onRowClick={onRowClick}
+                density={density}
+                densityClasses={densityClasses}
+              />
+            </table>
+          </div>
         </div>
       </div>
 
