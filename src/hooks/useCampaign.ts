@@ -1,46 +1,46 @@
-import { useState } from 'react';
-import { useForm } from '@/hooks/useForm';
-import { useAsyncAction } from '@/hooks/useAsyncAction';
-import { useCampaign } from '@/hooks/useCampaign';
+import { useState, useEffect } from 'react';
+import affiliateService, { Campaign, CreateCampaignRequest } from '@/services/affiliateService';
 
-export const useCampaignOperations = (onCampaignCreated?: (campaign: any) => void) => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const { campaigns, createCampaign: createCampaignHook, loading: campaignsLoading } = useCampaign();
-  
-  const {
-    values: campaignForm,
-    updateValue: updateCampaignValue,
-    reset: resetCampaignForm,
-    validate: validateCampaign
-  } = useForm({ name: '' });
+export const useCampaigns = () => {
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const { execute: createCampaign, loading: creatingCampaign } = useAsyncAction(async () => {
-    if (!validateCampaign() || !campaignForm.name.trim()) {
-      throw new Error('Campaign name is required');
+  const loadCampaigns = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await affiliateService.campaigns.getAll();
+      setCampaigns(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setError('Failed to load campaigns');
+      console.error('Error loading campaigns:', err);
+      setCampaigns([]);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    const newCampaign = await createCampaignHook({
-      name: campaignForm.name.trim()
-    });
-    
-    if (onCampaignCreated) {
-      onCampaignCreated(newCampaign);
+  const createCampaign = async (campaignData: CreateCampaignRequest): Promise<Campaign> => {
+    try {
+      const newCampaign = await affiliateService.campaigns.create(campaignData);
+      setCampaigns(prev => [newCampaign, ...prev]);
+      return newCampaign;
+    } catch (error) {
+      console.error('Error creating campaign:', error);
+      throw error;
     }
-    
-    setIsModalOpen(false);
-    resetCampaignForm();
-    
-    return newCampaign;
-  });
+  };
+
+  useEffect(() => {
+    loadCampaigns();
+  }, []);
 
   return {
     campaigns,
-    campaignsLoading,
-    isModalOpen,
-    setIsModalOpen,
-    campaignForm,
-    updateCampaignValue,
+    loading,
+    error,
     createCampaign,
-    creatingCampaign
+    refetch: loadCampaigns
   };
 };

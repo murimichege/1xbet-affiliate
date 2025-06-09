@@ -1,11 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { DataTable } from '@/components/common/Datatable';
-import { MAIN_PAGE_STATS, STATS_TABLE_DATA } from '@/data/dummyData';
+import { STATS_TABLE_DATA } from '@/data/dummyData';
 import { StatCard } from '../common';
 import { Card } from '../ui';
 import { ColumnDef } from '@tanstack/react-table';
-
-
+import affiliateService from '@/services/affiliateService';
 
 interface StatsTableData {
   currency: string;
@@ -20,9 +19,92 @@ interface StatsTableData {
   commissionAmount: number;
 }
 
+interface ProfileStats {
+  username: string;
+  currency: string;
+  country: string;
+  fixedPay: number;
+  revShare: number;
+  domain: string;
+  memberSince: number;
+}
+
+interface StatCardData {
+  id: string;
+  label: string;
+  value: string;
+  icon: string;
+  color: string;
+  bgColor: string;
+}
+
 const MainPage: React.FC = () => {
   const [selectedTimeframe, setSelectedTimeframe] = useState('Yesterday');
-  
+  const [profileStats, setProfileStats] = useState<ProfileStats | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Load profile data
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        setLoading(true);
+        const profile = await affiliateService.profile.get();
+        
+        // Map profile data to stats
+        const stats: ProfileStats = {
+          username: profile.username,
+          currency: profile.currency,
+          country: profile.country?.toUpperCase() || 'N/A',
+          fixedPay: profile.fixed_pay,
+          revShare: profile.rev_share, // Keep as decimal: 0.25
+          domain: profile.domains?.[0]?.domain || 'N/A',
+          memberSince: new Date(profile.created_at).getFullYear()
+        };
+
+        setProfileStats(stats);
+      } catch (error) {
+        console.error('Error loading stats:', error);
+        setProfileStats({
+          username: 'Unknown',
+          currency: 'USD',
+          country: 'N/A',
+          fixedPay: 0,
+          revShare: 0,
+          domain: 'N/A',
+          memberSince: new Date().getFullYear()
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadStats();
+  }, []);
+
+  // Generate stat cards from profile data (only fixed_pay and rev_share)
+  const getMainPageStats = (): StatCardData[] => {
+    if (!profileStats) return [];
+
+    return [
+      {
+        id: 'fixed-pay',
+        label: 'FIXED PAY',
+        value: `${profileStats.currency} ${profileStats.fixedPay.toFixed(2)}`,
+        icon: 'fas fa-money-bill',
+        color: 'text-green-600',
+        bgColor: 'bg-green-50'
+      },
+      {
+        id: 'rev-share',
+        label: 'REVENUE SHARE',
+        value: `${profileStats.revShare}`,
+        icon: 'fas fa-percentage',
+        color: 'text-purple-600',
+        bgColor: 'bg-purple-50'
+      }
+    ];
+  };
+
   const statsTableColumns = useMemo<ColumnDef<StatsTableData>[]>(() => [
     {
       accessorKey: 'currency',
@@ -106,7 +188,7 @@ const MainPage: React.FC = () => {
       header: 'RS',
       size: 60,
       cell: ({ getValue }) => (
-        <span className="text-sm">{getValue() as string}%</span>
+        <span className="text-sm">{getValue() as number}%</span>
       ),
     },
     {
@@ -123,7 +205,6 @@ const MainPage: React.FC = () => {
         );
       }
     },
-    
     {
       accessorKey: 'commissionAmount',
       header: 'COMMISSION',
@@ -140,21 +221,32 @@ const MainPage: React.FC = () => {
           </span>
         );
       }
-    }
-    ,
+    },
   ], []);
 
   return (
     <div className="space-y-6 w-full">
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
       
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-        {MAIN_PAGE_STATS.map((card) => (
+      {/* Welcome Message */}
+      {profileStats && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <h2 className="text-2xl font-semibold text-gray-900">
+            Welcome, {profileStats.username}!
+          </h2>
+          <p className="text-gray-600 mt-1">
+            Affiliate Dashboard - {profileStats.country} ({profileStats.domain})
+          </p>
+        </div>
+      )}
+      
+      {/* Statistics Cards - Only Fixed Pay and Revenue Share */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {getMainPageStats().map((card) => (
           <StatCard 
             key={card.id} 
             data={card} 
-            // loading={loading}
+            loading={loading}
           />
         ))}
       </div>

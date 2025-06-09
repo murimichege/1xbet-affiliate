@@ -31,7 +31,7 @@ const StatCard: React.FC<StatCardProps> = ({
             </div>
           ) : (
             <p className="text-2xl font-bold text-gray-900">
-              $ {data.value}
+              {data.value}
             </p>
           )}
         </div>
