@@ -4,7 +4,7 @@ import { STATS_TABLE_DATA } from '@/data/dummyData';
 import { StatCard } from '../common';
 import { Card } from '../ui';
 import { ColumnDef } from '@tanstack/react-table';
-import affiliateService from '@/services/affiliateService';
+import affiliateService, { AffiliateSummary } from '@/services/affiliateService';
 
 interface StatsTableData {
   currency: string;
@@ -41,7 +41,9 @@ interface StatCardData {
 const MainPage: React.FC = () => {
   const [selectedTimeframe, setSelectedTimeframe] = useState('Yesterday');
   const [profileStats, setProfileStats] = useState<ProfileStats | null>(null);
+  const [summaryData, setSummaryData] = useState<AffiliateSummary | null>(null);
   const [loading, setLoading] = useState(true);
+  const [summaryLoading, setSummaryLoading] = useState(true);
 
   // Load profile data
   useEffect(() => {
@@ -56,7 +58,7 @@ const MainPage: React.FC = () => {
           currency: profile.currency,
           country: profile.country?.toUpperCase() || 'N/A',
           fixedPay: profile.fixed_pay,
-          revShare: profile.rev_share, // Keep as decimal: 0.25
+          revShare: profile.rev_share * 100, 
           domain: profile.domains?.[0]?.domain || 'N/A',
           memberSince: new Date(profile.created_at).getFullYear()
         };
@@ -81,6 +83,30 @@ const MainPage: React.FC = () => {
     loadStats();
   }, []);
 
+  // Load summary data
+  useEffect(() => {
+    const loadSummaryData = async () => {
+      try {
+        setSummaryLoading(true);
+        const summaryResponse = await affiliateService.summary.get();
+        
+        // Take the first item from the array (assuming single currency)
+        if (Array.isArray(summaryResponse) && summaryResponse.length > 0) {
+          setSummaryData(summaryResponse[0]);
+        } else {
+          setSummaryData(null);
+        }
+      } catch (error) {
+        console.error('Error loading summary data:', error);
+        setSummaryData(null);
+      } finally {
+        setSummaryLoading(false);
+      }
+    };
+
+    loadSummaryData();
+  }, []);
+
   // Generate stat cards from profile data (only fixed_pay and rev_share)
   const getMainPageStats = (): StatCardData[] => {
     if (!profileStats) return [];
@@ -97,10 +123,94 @@ const MainPage: React.FC = () => {
       {
         id: 'rev-share',
         label: 'REVENUE SHARE',
-        value: `${profileStats.revShare}`,
+        value: `${profileStats.revShare}%`,
         icon: 'fas fa-percentage',
         color: 'text-purple-600',
         bgColor: 'bg-purple-50'
+      }
+    ];
+  };
+
+  // Generate stat cards from summary data
+  const getSummaryStats = (): StatCardData[] => {
+    // Provide fallback values when summary data is not available
+    const fallbackSummary = {
+      currency: profileStats?.currency || 'USD',
+      yesterday: 0,
+      last_30_days: 0,
+      this_month: 0,
+      all_time: 0,
+      paid: 0,
+      last_paid_at: null
+    };
+
+    const data = summaryData || fallbackSummary;
+
+    const formatCurrency = (amount: number | null | undefined) => {
+      const safeAmount = amount || 0;
+      return `${data.currency} ${safeAmount.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      })}`;
+    };
+
+    const formatLastPaid = () => {
+      if (!data.last_paid_at) return 'Never';
+      try {
+        return new Date(data.last_paid_at).toLocaleDateString();
+      } catch {
+        return 'Never';
+      }
+    };
+
+    return [
+      {
+        id: 'yesterday',
+        label: 'YESTERDAY',
+        value: formatCurrency(data.yesterday),
+        icon: 'fas fa-calendar-day',
+        color: 'text-blue-600',
+        bgColor: 'bg-blue-50'
+      },
+      {
+        id: 'last-30-days',
+        label: 'LAST 30 DAYS',
+        value: formatCurrency(data.last_30_days),
+        icon: 'fas fa-calendar-month',
+        color: 'text-indigo-600',
+        bgColor: 'bg-indigo-50'
+      },
+      {
+        id: 'this-month',
+        label: 'THIS MONTH',
+        value: formatCurrency(data.this_month),
+        icon: 'fas fa-calendar',
+        color: 'text-cyan-600',
+        bgColor: 'bg-cyan-50'
+      },
+      {
+        id: 'all-time',
+        label: 'ALL TIME',
+        value: formatCurrency(data.all_time),
+        icon: 'fas fa-infinity',
+        color: 'text-emerald-600',
+        bgColor: 'bg-emerald-50'
+      },
+      {
+        id: 'paid',
+        label: 'TOTAL PAID',
+        value: formatCurrency(data.paid),
+        icon: 'fas fa-hand-holding-dollar',
+        color: 'text-green-600',
+        bgColor: 'bg-green-50'
+      },
+      {
+        id: 'last-paid',
+        label: 'LAST PAID',
+        value: formatLastPaid(),
+        icon: 'fas fa-clock',
+        color: 'text-orange-600',
+        bgColor: 'bg-orange-50'
       }
     ];
   };
@@ -240,13 +350,24 @@ const MainPage: React.FC = () => {
         </div>
       )}
       
-      {/* Statistics Cards - Only Fixed Pay and Revenue Share */}
+      {/* Statistics Cards - Profile Stats (Fixed Pay and Revenue Share) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
         {getMainPageStats().map((card) => (
           <StatCard 
             key={card.id} 
             data={card} 
             loading={loading}
+          />
+        ))}
+      </div>
+
+      {/* Summary Statistics Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        {getSummaryStats().map((card) => (
+          <StatCard 
+            key={card.id} 
+            data={card} 
+            loading={summaryLoading}
           />
         ))}
       </div>

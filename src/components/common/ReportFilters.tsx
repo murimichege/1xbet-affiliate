@@ -4,7 +4,7 @@ import { Card, Button, Select, Input } from '@/components/ui';
 export interface FilterField {
   key: string;
   label: string;
-  type: 'select' | 'text' | 'date';
+  type: 'select' | 'multiselect' | 'text' | 'date';
   options?: string[];
   placeholder?: string;
   className?: string;
@@ -18,7 +18,7 @@ interface ReportFiltersProps<T> {
   fields: FilterField[];
   isLoading?: boolean;
   title?: string;
-  layout?: 'player' | 'full' | 'summary'; // Different layouts for different report pages in the reports section
+  layout?: 'player' | 'full' | 'summary';
 }
 
 export const ReportFilters = <T extends Record<string, any>>({
@@ -33,15 +33,13 @@ export const ReportFilters = <T extends Record<string, any>>({
 }: ReportFiltersProps<T>) => {
   
   const renderField = (field: FilterField) => {
-    const value = filters[field.key] || '';
+    const value = filters[field.key] || (field.type === 'multiselect' ? [] : '');
     
     const commonProps = {
       label: field.label,
-      value: value,
-      onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => 
-        onFilterChange(field.key as keyof T, e.target.value as T[keyof T]),
       disabled: isLoading,
       className: field.className || '',
+      placeholder: field.placeholder
     };
     
     switch (field.type) {
@@ -49,22 +47,66 @@ export const ReportFilters = <T extends Record<string, any>>({
         return (
           <Select
             {...commonProps}
-            options={field.options?.map(opt => ({ value: opt, label: opt })) || []}
+            value={value as string}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => 
+              onFilterChange(field.key as keyof T, e.target.value as T[keyof T])
+            }
+            options={field.options?.map(opt => {
+              // Handle value:label format - split only on FIRST colon
+              if (opt.includes(':')) {
+                const colonIndex = opt.indexOf(':');
+                const optValue = opt.substring(0, colonIndex);
+                const optLabel = opt.substring(colonIndex + 1);
+                return { value: optValue, label: optLabel };
+              }
+              return { value: opt, label: opt };
+            }) || []}
           />
         );
+        
+      case 'multiselect':
+        return (
+          <Select
+            {...commonProps}
+            multiple
+            value={value as string[]}
+            onChange={(selectedValues: string[]) => 
+              onFilterChange(field.key as keyof T, selectedValues as T[keyof T])
+            }
+            options={field.options?.map(opt => {
+              // Handle value:label format - split only on FIRST colon
+              if (opt.includes(':')) {
+                const colonIndex = opt.indexOf(':');
+                const optValue = opt.substring(0, colonIndex);
+                const optLabel = opt.substring(colonIndex + 1);
+                return { value: optValue, label: optLabel };
+              }
+              return { value: opt, label: opt };
+            }) || []}
+          />
+        );
+        
       case 'date':
         return (
           <Input
             {...commonProps}
             type="date"
+            value={value as string}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
+              onFilterChange(field.key as keyof T, e.target.value as T[keyof T])
+            }
           />
         );
+        
       default:
         return (
           <Input
             {...commonProps}
             type="text"
-            placeholder={field.placeholder}
+            value={value as string}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
+              onFilterChange(field.key as keyof T, e.target.value as T[keyof T])
+            }
           />
         );
     }
@@ -94,7 +136,7 @@ export const ReportFilters = <T extends Record<string, any>>({
       case 'summary':
       default:
         return {
-          mainGrid: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4',
+          mainGrid: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-2',
           showTitle: false,
           showDateRange: true,
           showExtraFields: false,
@@ -105,9 +147,9 @@ export const ReportFilters = <T extends Record<string, any>>({
 
   const config = getLayoutConfig();
   
-  // Separate fields by type
-  const mainFields = fields.filter(field => field.type !== 'date');
+  // Separate fields by type - dates first, then others
   const dateFields = fields.filter(field => field.type === 'date');
+  const nonDateFields = fields.filter(field => field.type !== 'date');
 
   return (
     <Card className="p-6">
@@ -122,50 +164,23 @@ export const ReportFilters = <T extends Record<string, any>>({
       )}
       
       <div className="space-y-6">
-        {/* Main Filters Row */}
-        <div className={`grid ${config.mainGrid} gap-4`}>
-          {mainFields.map((field) => (
-            <div key={field.key}>
-              {renderField(field)}
-            </div>
-          ))}
-        </div>
-
-        {/* Date Range Section */}
-        {config.showDateRange && dateFields.length > 0 && (
-          <div className="space-y-4">
-            {layout === 'full' && (
-              <div className="flex items-center justify-end">
-                <div className="text-sm font-medium text-gray-700 mr-4">Date Range</div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-md">
-                  {dateFields.map((field) => (
-                    <div key={field.key}>
-                      {renderField(field)}
-                    </div>
-                  ))}
-                </div>
+        {dateFields.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {dateFields.map((field) => (
+              <div key={field.key} className="min-w-0">
+                {renderField(field)}
               </div>
-            )}
+            ))}
+          </div>
+        )}
 
-            {layout === 'summary' && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-md">
-                {dateFields.map((field) => (
-                  <div key={field.key}>
-                    {renderField(field)}
-                  </div>
-                ))}
+        {nonDateFields.length > 0 && (
+          <div className={`grid ${config.mainGrid} gap-4`}>
+            {nonDateFields.map((field) => (
+              <div key={field.key} className="min-w-0">
+                {renderField(field)}
               </div>
-            )}
-
-            {layout === 'player' && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {dateFields.map((field) => (
-                  <div key={field.key}>
-                    {renderField(field)}
-                  </div>
-                ))}
-              </div>
-            )}
+            ))}
           </div>
         )}
       </div>
@@ -211,4 +226,3 @@ export const FullReportFilters = <T extends Record<string, any>>(
 export const SummaryReportFilters = <T extends Record<string, any>>(
   props: Omit<ReportFiltersProps<T>, 'layout'>
 ) => <ReportFilters {...props} layout="summary" />;
-

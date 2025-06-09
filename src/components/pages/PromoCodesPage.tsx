@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { DataTable } from '@/components/common/Datatable';
-import { Card, Button, Icon, Select } from '@/components/ui';
+import { Card, Button, Icon, Select, Input } from '@/components/ui';
 import { ColumnDef } from '@tanstack/react-table';
 import { useForm } from '@/hooks/useForm';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
@@ -10,9 +10,8 @@ import { CampaignModal } from '@/components/ui/Modal';
 import affiliateService, { PromoCodeResponse } from '@/services/affiliateService';
 
 interface PromoCodeForm {
-  website: string;
-  currency: string;
   campaign: string;
+  code: string;
 }
 
 interface PromoCode {
@@ -21,33 +20,9 @@ interface PromoCode {
   code: string;
   campaignId: number;
   campaignName: string;
-  btag: string;
   status: string;
   createdAt: string;
-  // UI-specific fields
-  website: string;
-  currency: string;
 }
-
-const INITIAL_FORM_DATA: PromoCodeForm = {
-  website: 'https://www.facebook.com/',
-  currency: 'KES',
-  campaign: ''
-};
-
-const WEBSITE_OPTIONS = [
-  { value: 'https://www.facebook.com/', label: 'Facebook' },
-  { value: 'https://www.instagram.com/', label: 'Instagram' },
-  { value: 'https://1xbet.co.ke', label: '1xBet Kenya' },
-  { value: 'https://betkumi.co.ke', label: 'BetKumi' }
-];
-
-const CURRENCY_OPTIONS = [
-  { value: 'KES', label: 'KES' },
-  { value: 'USD', label: 'USD' },
-  { value: 'EUR', label: 'EUR' },
-  { value: 'GBP', label: 'GBP' }
-];
 
 const PromoCodesPage: React.FC = () => {
   const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
@@ -55,7 +30,10 @@ const PromoCodesPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   const { campaigns, loading: campaignsLoading, createCampaign } = useCampaigns();
-  const { values: formData, updateValue, reset } = useForm(INITIAL_FORM_DATA);
+  const { values: formData, updateValue, reset } = useForm<PromoCodeForm>({
+    campaign: '',
+    code: ''
+  });
 
   // Load initial data
   useEffect(() => {
@@ -78,12 +56,8 @@ const PromoCodesPage: React.FC = () => {
         code: code.code,
         campaignId: code.campaign_id,
         campaignName: campaigns.find(c => c.xid === code.campaign_id)?.name || 'Unknown Campaign',
-        btag: `d_${code.xid}m_1599c_${code.code}`,
         status: code.status,
-        createdAt: code.created_at,
-        // UI-specific fields
-        website: formData.website,
-        currency: formData.currency
+        createdAt: code.created_at
       }));
       
       setPromoCodes(transformedPromoCodes);
@@ -110,7 +84,7 @@ const PromoCodesPage: React.FC = () => {
     }
 
     const promoRequest = {
-      code: `PROMO_${Date.now()}`, // Generate unique code
+      code: formData.code, 
       campaign_id: selectedCampaign.xid || 1
     };
 
@@ -123,11 +97,8 @@ const PromoCodesPage: React.FC = () => {
       code: newPromoCodeResponse.code,
       campaignId: newPromoCodeResponse.campaign_id,
       campaignName: selectedCampaign.name,
-      btag: `d_${newPromoCodeResponse.xid}m_1599c_${newPromoCodeResponse.code}`,
       status: newPromoCodeResponse.status,
-      createdAt: newPromoCodeResponse.created_at,
-      website: formData.website,
-      currency: formData.currency
+      createdAt: newPromoCodeResponse.created_at
     };
 
     setPromoCodes(prev => [transformedPromoCode, ...prev]);
@@ -149,40 +120,6 @@ const PromoCodesPage: React.FC = () => {
       cell: ({ getValue }) => (
         <span className="font-mono text-sm text-gray-600">
           #{getValue() as number}
-        </span>
-      )
-    },
-    {
-      accessorKey: 'website',
-      header: 'Website',
-      size: 150,
-      minSize: 120,
-      maxSize: 180,
-      cell: ({ getValue }) => {
-        const url = getValue() as string;
-        const displayName = WEBSITE_OPTIONS.find(opt => opt.value === url)?.label || url;
-        return (
-          <a 
-            href={url} 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="text-blue-600 hover:text-blue-800 block truncate" 
-            title={url}
-          >
-            {displayName}
-          </a>
-        );
-      }
-    },
-    {
-      accessorKey: 'currency',
-      header: 'Currency',
-      size: 100,
-      minSize: 80,
-      maxSize: 120,
-      cell: ({ getValue }) => (
-        <span className="px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-700 block">
-          {getValue() as string}
         </span>
       )
     },
@@ -211,30 +148,6 @@ const PromoCodesPage: React.FC = () => {
       }
     },
     {
-      accessorKey: 'btag',
-      header: 'BTAG',
-      size: 200,
-      minSize: 160,
-      maxSize: 240,
-      cell: ({ getValue }) => {
-        const btag = getValue() as string;
-        return (
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="truncate font-mono text-sm flex-1 min-w-0" title={btag}>{btag}</div>
-            <Button 
-              size="sm" 
-              variant="ghost" 
-              className="h-6 w-6 p-0 flex-shrink-0" 
-              onClick={() => copyToClipboard(btag)} 
-              title="Copy BTAG"
-            >
-              <Icon name="fas fa-copy" className="text-xs" />
-            </Button>
-          </div>
-        );
-      }
-    },
-    {
       accessorKey: 'campaignName',
       header: 'Campaign',
       size: 120,
@@ -254,11 +167,26 @@ const PromoCodesPage: React.FC = () => {
       maxSize: 120,
       cell: ({ getValue }) => {
         const status = getValue() as string;
-        const statusColor = status === 'pending' ? 'bg-yellow-100 text-yellow-700' : 
-                          status === 'active' ? 'bg-green-100 text-green-700' : 
-                          'bg-red-100 text-red-700';
+        const normalizedStatus = status.toLowerCase();
+        
+        const getStatusColor = (status: string) => {
+          switch (status) {
+            case 'pending':
+              return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+            case 'approved':
+              return 'bg-green-100 text-green-800 border-green-200';
+            case 'rejected':
+            case 'declined':
+              return 'bg-red-100 text-red-800 border-red-200';
+            case 'active':
+              return 'bg-blue-100 text-blue-800 border-blue-200';
+            default:
+              return 'bg-gray-100 text-gray-800 border-gray-200';
+          }
+        };
+  
         return (
-          <span className={`px-2 py-1 rounded text-xs font-medium ${statusColor} block`}>
+          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(normalizedStatus)}`}>
             {status.toUpperCase()}
           </span>
         );
@@ -287,10 +215,9 @@ const PromoCodesPage: React.FC = () => {
         <Card className="p-6">
           <div className="animate-pulse space-y-4">
             <div className="h-6 bg-gray-200 rounded w-1/4"></div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="h-10 bg-gray-200 rounded"></div>
-              ))}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="h-10 bg-gray-200 rounded"></div>
+              <div className="h-10 bg-gray-200 rounded"></div>
             </div>
             <div className="flex gap-2">
               <div className="h-10 bg-gray-200 rounded flex-1"></div>
@@ -313,25 +240,7 @@ const PromoCodesPage: React.FC = () => {
         {/* Fixed Layout Structure */}
         <div className="space-y-4">
           {/* Form Fields Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="min-w-0">
-              <Select 
-                label="Website" 
-                value={formData.website} 
-                onChange={e => updateValue('website', e.target.value)} 
-                options={WEBSITE_OPTIONS}
-              />
-            </div>
-            
-            <div className="min-w-0">
-              <Select 
-                label="Currency" 
-                value={formData.currency} 
-                onChange={e => updateValue('currency', e.target.value)} 
-                options={CURRENCY_OPTIONS}
-              />
-            </div>
-            
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="min-w-0">
               <Select 
                 label="Campaign" 
@@ -341,6 +250,16 @@ const PromoCodesPage: React.FC = () => {
                   value: c.xid?.toString() || c.name, 
                   label: c.name 
                 })) : []}
+              />
+            </div>
+            
+            <div className="min-w-0">
+              <Input
+                label="Promo Code (Optional)"
+                type="text"
+                value={formData.code}
+                onChange={e => updateValue('code', e.target.value)}
+                placeholder="Enter custom promo code or leave empty to auto-generate"
               />
             </div>
           </div>
@@ -390,7 +309,7 @@ const PromoCodesPage: React.FC = () => {
               enableSorting 
               enableSelection 
               enableGlobalSearch 
-              searchPlaceholder="Search by code, website, or campaign..." 
+              searchPlaceholder="Search by code, campaign, or BTAG..." 
               pageSize={10} 
               showPagination={promoCodes.length > 10}
               tableClassName="w-full table-fixed" 

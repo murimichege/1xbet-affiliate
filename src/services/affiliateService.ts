@@ -24,6 +24,7 @@ export interface CreateAffiliateLinkRequest {
 }
 
 export interface AffiliateLinkResponse {
+  url: string;
   user_id: number;
   xid: number;
   domain: string;
@@ -72,6 +73,39 @@ export interface AffiliateProfile {
   }>;
   country: string;
   is_manager: boolean;
+}
+
+// Summary interfaces
+export interface AffiliateSummary {
+  currency: string;
+  yesterday: number;
+  last_30_days: number;
+  this_month: number;
+  all_time: number;
+  paid: number;
+  last_paid_at: string;
+}
+
+// Reports interfaces
+export interface QuickReportParams {
+  links?: number[];
+  promos?: number[];
+  start: string;
+  end: string;
+}
+
+export interface QuickReportResponse {
+  currency: string;
+  new_account_count: number;
+  new_account_with_deposit_count: number;
+  new_deposit_count: number;
+  new_deposit_sum: number;
+  new_deposit_account_count: number;
+  deposit_sum: number;
+  deposit_count: number;
+  deposit_account_count: number;
+  active_account_count: number;
+  commission: number;
 }
 
 // Referral interfaces
@@ -243,6 +277,39 @@ export const affiliateService = {
      */
     async update(profileData: Partial<AffiliateProfile>): Promise<AffiliateProfile> {
       const response = await apiClient.put(`${AFFILIATE_BASE_PATH}/profile`, profileData);
+      return response.data;
+    }
+  },
+
+  // ==================== SUMMARY ====================
+  summary: {
+    /**
+     * Get affiliate summary statistics
+     */
+    async get(): Promise<AffiliateSummary[]> {
+      const response = await apiClient.get(`${AFFILIATE_BASE_PATH}/summary`);
+      return response.data;
+    }
+  },
+
+  // ==================== REPORTS ====================
+  reports: {
+    /**
+     * Get quick report data
+     */
+    async getQuickReport(params: QuickReportParams): Promise<QuickReportResponse[]> {
+      const queryParams = new URLSearchParams();
+      
+      if (params.links && params.links.length > 0) {
+        params.links.forEach(linkId => queryParams.append('links', linkId.toString()));
+      }
+      if (params.promos && params.promos.length > 0) {
+        params.promos.forEach(promoId => queryParams.append('promos', promoId.toString()));
+      }
+      queryParams.append('start', params.start);
+      queryParams.append('end', params.end);
+      
+      const response = await apiClient.get(`${AFFILIATE_BASE_PATH}/reports/quick?${queryParams.toString()}`);
       return response.data;
     }
   },

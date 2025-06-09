@@ -1,169 +1,235 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Card, Button, Icon } from '@/components/ui';
-import { SummaryReportFilters } from '@/components/common/ReportFilters';
-import { useFilters } from '@/hooks/useFilters';
+import { SummaryReportFilters, FilterField } from '@/components/common/ReportFilters';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
-import { SUMMARY_METRICS } from '@/data/dummyData';
 import { exportToCSV } from '@/utils/csvExport';
-import { SUMMARY_FILTER_FIELDS } from '@/utils/ReportConfig';
+import affiliateService, {
+  QuickReportResponse,
+  AffiliateLinkResponse,
+  PromoCodeResponse
+} from '@/services/affiliateService';
 
-const INITIAL_SUMMARY_FILTERS = {
-  currency: 'USD',
-  website: 'All',
-  marketingToolId: '',
-  timeInterval: 'Exact period',
-  dateFrom: '2025-06-04',
-  dateTo: '2025-06-04'
-};
-
-
-
-interface SummaryData {
-  views: number;
-  clicks: number;
-  directLinks: number;
-  clicksViews: number;
-  registrations: number;
-  regClicksRatio: number;
-  regWithDeposits: number;
-  regDepositRatio: number;
-  totalNewDepositAmount: number;
-  newDepositors: number;
-  accountsWithDeposits: number;
-  sumAllDeposits: number;
-  revenue: number;
-  numberOfDeposits: number;
-  activePlayers: number;
-  avgProfitPerPlayer: number;
+interface ReportFilters {
+  links: string[];
+  promos: string[];
+  start: string;
+  end: string;
 }
 
+const INITIAL_FILTERS: ReportFilters = {
+  links: [],
+  promos: [],
+  start: new Date().toISOString().split('T')[0],
+  end: new Date().toISOString().split('T')[0]
+};
+
+interface MetricDefinition {
+  key: keyof QuickReportResponse;
+  label: string;
+  type: 'number' | 'currency';
+}
+
+const METRICS: MetricDefinition[] = [
+  { key: 'new_account_count', label: 'New Accounts', type: 'number' },
+  { key: 'new_account_with_deposit_count', label: 'New Accounts with Deposits', type: 'number' },
+  { key: 'new_deposit_count', label: 'New Deposit Count', type: 'number' },
+  { key: 'new_deposit_sum', label: 'New Deposit Sum', type: 'currency' },
+  { key: 'new_deposit_account_count', label: 'New Deposit Account Count', type: 'number' },
+  { key: 'deposit_sum', label: 'Total Deposit Sum', type: 'currency' },
+  { key: 'deposit_count', label: 'Total Deposit Count', type: 'number' },
+  { key: 'deposit_account_count', label: 'Deposit Account Count', type: 'number' },
+  { key: 'active_account_count', label: 'Active Accounts', type: 'number' },
+  { key: 'commission', label: 'Commission', type: 'currency' }
+];
+
 const SummaryPage: React.FC = () => {
-  const [reportData, setReportData] = useState<SummaryData | null>(null);
+  const [filters, setFilters] = useState<ReportFilters>(INITIAL_FILTERS);
+  const [reportData, setReportData] = useState<QuickReportResponse | null | 'empty'>(null);
+  const [availableLinks, setAvailableLinks] = useState<AffiliateLinkResponse[]>([]);
+  const [availablePromos, setAvailablePromos] = useState<PromoCodeResponse[]>([]);
+  const [loadingOptions, setLoadingOptions] = useState(true);
 
-  const {
-    filters,
-    updateFilter,
-    applyFilters,
-    resetFilters,
-    isApplying
-  } = useFilters(INITIAL_SUMMARY_FILTERS, {
-    onApply: async () => {
-      const data = await generateMockSummaryData();
-      setReportData(data);
-    },
-    onReset: () => {
-      setReportData(null);
-    }
-  });
-
-  const generateMockSummaryData = async (): Promise<SummaryData> => {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    return {
-      views: 3489,
-      clicks: 754,
-      directLinks: 27,
-      clicksViews: 9.8,
-      registrations: 102,
-      regClicksRatio: 13.5,
-      regWithDeposits: 62,
-      regDepositRatio: 60.7,
-      totalNewDepositAmount: 28974,
-      newDepositors: 21,
-      accountsWithDeposits: 49,
-      sumAllDeposits: 75400,
-      revenue: 3540,
-      numberOfDeposits: 123,
-      activePlayers: 87,
-      avgProfitPerPlayer: 174
+  // Load links and promo codes on mount
+  useEffect(() => {
+    const loadOptions = async () => {
+      try {
+        setLoadingOptions(true);
+        const [links, promos] = await Promise.all([
+          affiliateService.links.getAll().catch(() => []),
+          affiliateService.promoCodes.getAll().catch(() => [])
+        ]);
+        setAvailableLinks(Array.isArray(links) ? links : []);
+        setAvailablePromos(Array.isArray(promos) ? promos : []);
+      } catch (err) {
+        console.error('Error loading filter options:', err);
+      } finally {
+        setLoadingOptions(false);
+      }
     };
-  };
+    loadOptions();
+  }, []);
 
-  const { execute: handleExport, loading: isExporting } = useAsyncAction(
-    async () => {
-      if (!reportData) return;
-      
-      const rows = SUMMARY_METRICS.map(metric => ({
-        Metric: metric.label,
-        Value: reportData[metric.key as keyof SummaryData] !== undefined 
-          ? reportData[metric.key as keyof SummaryData] 
-          : '-'
-      }));
-      
-      exportToCSV(rows, `summary-report-${new Date().toISOString().split('T')[0]}`);
+  // Generate options for dropdowns
+  const linkOptions = useMemo(() => 
+    availableLinks.map(link => `${link.xid}:${link.url || `${link.domain}${link.landing_page}`}`)
+  , [availableLinks]);
+
+  const promoOptions = useMemo(() => 
+    availablePromos.map(promo => `${promo.xid}:${promo.code}`)
+  , [availablePromos]);
+
+  // Filter field definitions
+  const filterFields: FilterField[] = useMemo(() => [
+    {
+      key: 'links',
+      label: 'Filter by Links (Optional)',
+      type: 'multiselect',
+      options: linkOptions,
+      placeholder: 'Select affiliate links...'
     },
     {
-      onSuccess: () => console.log('Summary report exported successfully'),
-      onError: (error) => console.error('Export failed:', error)
+      key: 'promos',
+      label: 'Filter by Promo Codes (Optional)',
+      type: 'multiselect',
+      options: promoOptions,
+      placeholder: 'Select promo codes...'
+    },
+    { key: 'start', label: 'Start Date', type: 'date' },
+    { key: 'end', label: 'End Date', type: 'date' }
+  ], [linkOptions, promoOptions]);
+
+  // Convert selected string values back to numbers for API
+  const parseSelectedIds = (selectedValues: string[]): number[] => {
+    return selectedValues
+      .map(value => {
+        // Handle "xid:label" format - extract just the xid part
+        const id = value.includes(':') ? value.split(':')[0] : value;
+        return parseInt(id, 10);
+      })
+      .filter(id => !isNaN(id));
+  };
+
+  const { execute: generateReport, loading: isGenerating } = useAsyncAction(
+    async () => {
+      const linkIds = parseSelectedIds(filters.links);
+      const promoIds = parseSelectedIds(filters.promos);
+      
+      const response = await affiliateService.reports.getQuickReport({
+        links: linkIds.length > 0 ? linkIds : undefined,
+        promos: promoIds.length > 0 ? promoIds : undefined,
+        start: filters.start,
+        end: filters.end
+      });
+
+      // Handle different response scenarios
+      if (!Array.isArray(response)) {
+        setReportData(null);
+        return;
+      }
+
+      if (response.length === 0) {
+        // Empty array - set a special state to differentiate from null
+        setReportData('empty');
+        return;
+      }
+
+      setReportData(response[0]);
+    },
+    {
+      onSuccess: () => console.log('Report generated successfully'),
+      onError: (err) => {
+        console.error('Report generation failed:', err);
+        setReportData(null);
+      }
     }
   );
 
+  const { execute: handleExport, loading: isExporting } = useAsyncAction(
+    async () => {
+      if (!reportData || reportData === 'empty') return;
+
+      const validReportData = reportData as QuickReportResponse;
+      const rows = METRICS.map(({ key, label, type }) => ({
+        Metric: label,
+        Value: formatValue(validReportData[key], type, validReportData.currency)
+      }));
+
+      exportToCSV(rows, `quick-report-${filters.start}-to-${filters.end}`);
+    },
+    {
+      onSuccess: () => console.log('Export successful'),
+      onError: err => console.error('Export failed:', err)
+    }
+  );
+
+  const formatValue = (val: number | string, type: 'number' | 'currency', currency: string): string => {
+    if (typeof val !== 'number') return '-';
+    
+    if (type === 'currency') {
+      return `${currency} ${val.toLocaleString(undefined, { 
+        minimumFractionDigits: 2, 
+        maximumFractionDigits: 2 
+      })}`;
+    }
+    
+    return val.toLocaleString();
+  };
+
   const formattedMetrics = useMemo(() => {
-    if (!reportData) return [];
+    if (!reportData || reportData === 'empty') return [];
+    
+    return METRICS.map(({ key, label, type }) => ({
+      key: key as string,
+      label,
+      formattedValue: formatValue((reportData as QuickReportResponse)[key], type, (reportData as QuickReportResponse).currency)
+    }));
+  }, [reportData]);
 
-    return SUMMARY_METRICS.map(metric => {
-      const value = reportData[metric.key as keyof SummaryData];
-      let formattedValue = '-';
+  const resetFilters = () => {
+    setFilters(INITIAL_FILTERS);
+    setReportData(null);
+  };
 
-      if (value !== undefined) {
-        // Format based on metric type
-        if (metric.key.includes('Ratio') || metric.key.includes('Views')) {
-          formattedValue = `${value.toFixed(1)}%`;
-        } else if (metric.key.includes('Amount') || metric.key.includes('revenue') || metric.key.includes('sumAll')) {
-          formattedValue = `${filters.currency} ${value.toLocaleString()}`;
-        } else {
-          formattedValue = value.toLocaleString();
-        }
-      }
-
-      return {
-        ...metric,
-        formattedValue,
-        rawValue: value
-      };
-    });
-  }, [reportData, filters.currency]);
+  const updateFilter = (key: keyof ReportFilters, value: ReportFilters[keyof ReportFilters]) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
 
   return (
     <div className="space-y-6">
       <SummaryReportFilters
         filters={filters}
         onFilterChange={updateFilter}
-        onApply={applyFilters}
+        onApply={generateReport}
         onReset={resetFilters}
-        fields={SUMMARY_FILTER_FIELDS}
-        isLoading={isApplying}
+        fields={filterFields}
+        isLoading={isGenerating || loadingOptions}
+        title="Quick Report Filters"
       />
-
-   
 
       <Card className="p-6">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h3 className="text-xl font-semibold text-gray-900">Detailed Summary Report</h3>
+            <h3 className="text-xl font-semibold text-gray-900">Quick Report</h3>
             <p className="text-sm text-gray-500 mt-1">
-              {reportData 
-                ? `Generated for ${filters.dateFrom} to ${filters.dateTo}` 
-                : 'Generate a report to view detailed metrics'
-              }
+              {reportData && reportData !== 'empty'
+                ? `Report from ${filters.start} to ${filters.end} • Currency: ${(reportData as QuickReportResponse).currency}`
+                : 'Generate a report to view your affiliate metrics.'}
             </p>
           </div>
-          
-          {reportData && (
-            <Button 
-              variant="secondary" 
-              icon="fas fa-download" 
+          {reportData && reportData !== 'empty' && (
+            <Button
+              variant="secondary"
+              icon="fas fa-download"
               onClick={handleExport}
               loading={isExporting}
               disabled={isExporting}
             >
-              {isExporting ? 'EXPORTING...' : 'EXPORT REPORT'}
+              {isExporting ? 'EXPORTING...' : 'EXPORT CSV'}
             </Button>
           )}
         </div>
 
-        {reportData ? (
+        {reportData && reportData !== 'empty' ? (
           <div className="overflow-hidden rounded-lg border border-gray-200">
             <table className="w-full">
               <thead className="bg-gray-50">
@@ -177,32 +243,47 @@ const SummaryPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 bg-white">
-                {formattedMetrics.map((metric, index) => (
+                {formattedMetrics.map(({ key, label, formattedValue }, idx) => (
                   <tr 
-                    key={metric.key} 
+                    key={key} 
                     className={`hover:bg-gray-50 transition-colors ${
-                      index % 2 === 0 ? 'bg-white' : 'bg-gray-25'
+                      idx % 2 === 0 ? 'bg-white' : 'bg-gray-25'
                     }`}
                   >
                     <td className="text-sm font-medium text-gray-700 px-6 py-4">
-                      {metric.label}
+                      {label}
                     </td>
                     <td className="text-sm font-semibold text-gray-900 px-6 py-4 text-right">
-                      {metric.formattedValue}
+                      {formattedValue}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+        ) : reportData === 'empty' ? (
+          <div className="text-center py-16 text-gray-500">
+            <Icon name="fas fa-search" className="text-gray-400 mx-auto text-4xl mb-4" />
+            <h4 className="text-lg font-medium text-gray-900 mb-2">No Data Found</h4>
+            <p className="text-sm text-gray-500 max-w-md mx-auto mb-4">
+              No data was found for the selected filters and date range ({filters.start} to {filters.end}).
+            </p>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-lg mx-auto">
+              <h5 className="text-sm font-medium text-blue-900 mb-2">Try adjusting your filters:</h5>
+              <ul className="text-xs text-blue-700 space-y-1 text-left">
+                <li>• Expand the date range to include more days</li>
+                <li>• Remove link or promo code filters to include all data</li>
+                <li>• Check if the selected links/promos had activity during this period</li>
+                <li>• Verify that the date range includes business days</li>
+              </ul>
+            </div>
+          </div>
         ) : (
           <div className="text-center py-16 text-gray-500">
-            <div className="mb-4">
-              <Icon name="fas fa-chart-bar" size="md" className="text-gray-400 mx-auto" />
-            </div>
+            <Icon name="fas fa-chart-bar" className="text-gray-400 mx-auto text-4xl mb-4" />
             <h4 className="text-lg font-medium text-gray-900 mb-2">No Report Generated</h4>
-            <p className="text-sm text-gray-500 mb-6 max-w-md mx-auto">
-              Configure your filters above and click "Generate Report" to view your summary statistics and detailed metrics.
+            <p className="text-sm text-gray-500 max-w-md mx-auto">
+              Set a date range and optional filters above, then click "Generate Report" to view your affiliate performance metrics.
             </p>
           </div>
         )}

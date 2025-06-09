@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { DataTable } from '@/components/common/Datatable';
-import { Card, Button, Icon, Select } from '@/components/ui';
+import { Card, Button, Icon, Select, Input } from '@/components/ui';
 import { ColumnDef } from '@tanstack/react-table';
 import { useForm } from '@/hooks/useForm';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
@@ -11,9 +11,8 @@ import affiliateService, { AffiliateLinkResponse } from '@/services/affiliateSer
 
 interface LinkGenerationForm {
   domain: string;
-  currency: string;
-  campaign: string;
   landingPage: string;
+  campaign: string;
 }
 
 interface AffiliateLink {
@@ -27,47 +26,68 @@ interface AffiliateLink {
   createdAt: string;
 }
 
+interface ProfileDomain {
+  domain: string;
+  country: string;
+}
+
+interface UserProfile {
+  user_id: number;
+  currency: string;
+  fixed_pay: number;
+  rev_share: number;
+  created_at: string;
+  username: string;
+  domains: ProfileDomain[];
+  country: string;
+  is_manager: boolean;
+}
+
 const INITIAL_FORM_DATA: LinkGenerationForm = {
-  domain: 'betkumi.co.ke',
-  currency: 'KES',
+  domain: '',
+  landingPage: '',
   campaign: '',
-  landingPage: '/sports/football',
 };
-
-const DOMAIN_OPTIONS = [
-  { value: 'betkumi.co.ke', label: 'betkumi.co.ke' },
-  { value: 'betkumi.com', label: 'betkumi.com' }
-];
-
-const CURRENCY_OPTIONS = [
-  { value: 'KES', label: 'KES' },
-  { value: 'USD', label: 'USD' },
-  { value: 'EUR', label: 'EUR' },
-  { value: 'GBP', label: 'GBP' }
-];
-
-const LANDING_PAGE_OPTIONS = [
-  { value: '/sports/football', label: '/sports/football' },
-  { value: '/sports/basketball', label: '/sports/basketball' },
-  { value: '/casino', label: '/casino' },
-  { value: '/live-casino', label: '/live-casino' },
-  { value: '/', label: '/ (Home)' }
-];
 
 const AffiliateLinksPage: React.FC = () => {
   const [links, setLinks] = useState<AffiliateLink[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [customLandingPages, setCustomLandingPages] = useState<string[]>([]);
 
   const { campaigns, loading: campaignsLoading, createCampaign } = useCampaigns();
   const { values: formData, updateValue, reset } = useForm(INITIAL_FORM_DATA);
 
-  // Load initial data
+  // Load user profile
   useEffect(() => {
-    if (!campaignsLoading && Array.isArray(campaigns)) {
+    loadUserProfile();
+  }, []);
+
+  // Load initial data when profile and campaigns are ready
+  useEffect(() => {
+    if (!campaignsLoading && !profileLoading && Array.isArray(campaigns) && userProfile) {
       loadInitialData();
+      // Set default domain if available
+      if (userProfile.domains.length > 0 && !formData.domain) {
+        updateValue('domain', userProfile.domains[0].domain);
+      }
     }
-  }, [campaigns, campaignsLoading]);
+  }, [campaigns, campaignsLoading, userProfile, profileLoading]);
+
+  const loadUserProfile = async () => {
+    try {
+      setProfileLoading(true);
+      const profile = await affiliateService.profile.get();
+      setUserProfile(profile);
+    } catch (error) {
+      console.error('Error loading user profile:', error);
+      setUserProfile(null);
+    } finally {
+      setProfileLoading(false);
+    }
+  };
 
   const loadInitialData = async () => {
     try {
@@ -75,6 +95,13 @@ const AffiliateLinksPage: React.FC = () => {
       const linksData = await affiliateService.links.getAll().catch(() => []);
       
       const linksArray = Array.isArray(linksData) ? linksData : [];
+      
+      // Extract unique landing pages from existing links
+      const existingLandingPages = [...new Set(
+        linksArray.map((link: AffiliateLinkResponse) => link.landing_page)
+      )].filter(Boolean);
+      
+      setCustomLandingPages(existingLandingPages);
       
       // Transform API response to match UI expectations
       const transformedLinks: AffiliateLink[] = linksArray.map((link: AffiliateLinkResponse) => ({
@@ -84,7 +111,7 @@ const AffiliateLinksPage: React.FC = () => {
         landingPage: link.landing_page,
         campaignId: link.campaign_id,
         campaignName: campaigns.find(c => c.xid === link.campaign_id)?.name || 'Unknown Campaign',
-        generatedLink: `https://refpa3267686.top/L?tag=d_${link.xid}m_1599c_&site=${link.xid}&ad=1599`,
+        generatedLink: link.url || `https://refpa3267686.top/L?tag=d_${link.xid}m_1599c_&site=${link.xid}&ad=1599`,
         createdAt: link.created_at
       }));
       
@@ -97,9 +124,49 @@ const AffiliateLinksPage: React.FC = () => {
     }
   };
 
+  // Combined landing page options (only from existing links + current input)
+  const landingPageOptions = useMemo(() => {
+    const allPages = [...customLandingPages];
+    
+    // Add current input if it's not in the list and not empty
+    if (formData.landingPage && !allPages.includes(formData.landingPage)) {
+      allPages.push(formData.landingPage);
+    }
+    
+    return [...new Set(allPages)].map(page => ({
+      value: page,
+      label: page === '/' ? '/ (Home)' : page
+    }));
+  }, [customLandingPages, formData.landingPage]);
+
+  // Normalize landing page input (ensure it starts with /)
+  const normalizeLandingPage = (input: string): string => {
+    if (!input) return '';
+    const trimmed = input.trim();
+    return trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+  };
+
+  const handleLandingPageChange = (value: string) => {
+    const normalized = normalizeLandingPage(value);
+    updateValue('landingPage', normalized);
+  };
+
+  const handleLandingPageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    updateValue('landingPage', value);
+  };
+
   const { execute: generateLink, loading: generatingLink } = useAsyncAction(async () => {
     if (!formData.campaign) {
       throw new Error('Please select a campaign first');
+    }
+
+    if (!formData.domain) {
+      throw new Error('Please select a domain first');
+    }
+
+    if (!formData.landingPage.trim()) {
+      throw new Error('Please enter a landing page');
     }
 
     const campaignsArray = Array.isArray(campaigns) ? campaigns : [];
@@ -111,9 +178,11 @@ const AffiliateLinksPage: React.FC = () => {
       throw new Error('Selected campaign not found');
     }
 
+    const finalLandingPage = normalizeLandingPage(formData.landingPage);
+
     const linkRequest = {
       domain: formData.domain,
-      landing_page: formData.landingPage,
+      landing_page: finalLandingPage,
       campaign_id: selectedCampaign.xid || 1
     };
 
@@ -126,12 +195,21 @@ const AffiliateLinksPage: React.FC = () => {
       landingPage: newLinkResponse.landing_page,
       campaignId: newLinkResponse.campaign_id,
       campaignName: selectedCampaign.name,
-      generatedLink: `https://refpa3267686.top/L?tag=d_${newLinkResponse.xid}m_1599c_&site=${newLinkResponse.xid}&ad=1599`,
+      generatedLink: newLinkResponse.url || `https://refpa3267686.top/L?tag=d_${newLinkResponse.xid}m_1599c_&site=${newLinkResponse.xid}&ad=1599`,
       createdAt: newLinkResponse.created_at
     };
 
+    // Add new landing page to custom list if it's not already there
+    if (!customLandingPages.includes(finalLandingPage)) {
+      setCustomLandingPages(prev => [...prev, finalLandingPage]);
+    }
+
     setLinks(prev => [newLink, ...prev]);
     reset();
+    // Reset domain to first available domain after reset
+    if (userProfile && userProfile.domains.length > 0) {
+      updateValue('domain', userProfile.domains[0].domain);
+    }
     return newLink;
   });
 
@@ -139,13 +217,23 @@ const AffiliateLinksPage: React.FC = () => {
     updateValue('campaign', newCampaign.xid?.toString() || newCampaign.name);
   };
 
+  // Generate domain options from user profile
+  const domainOptions = useMemo(() => {
+    if (!userProfile || !userProfile.domains) {
+      return [];
+    }
+    
+    return userProfile.domains.map(domainObj => ({
+      value: domainObj.domain,
+      label: `${domainObj.domain} (${domainObj.country.toUpperCase()})`
+    }));
+  }, [userProfile]);
+
   const linkColumns = useMemo<ColumnDef<AffiliateLink>[]>(() => [
     {
       accessorKey: 'xid',
       header: 'ID',
       size: 80,
-      minSize: 80,
-      maxSize: 80,
       cell: ({ getValue }) => (
         <span className="font-mono text-sm text-gray-600">
           #{getValue() as number}
@@ -156,8 +244,6 @@ const AffiliateLinksPage: React.FC = () => {
       accessorKey: 'domain',
       header: 'DOMAIN',
       size: 150,
-      minSize: 120,
-      maxSize: 180,
       cell: ({ getValue }) => {
         const domain = getValue() as string;
         const fullUrl = `https://${domain}`;
@@ -178,8 +264,6 @@ const AffiliateLinksPage: React.FC = () => {
       accessorKey: 'landingPage',
       header: 'LANDING PAGE',
       size: 150,
-      minSize: 120,
-      maxSize: 180,
       cell: ({ getValue }) => (
         <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded block truncate">
           {getValue() as string}
@@ -190,8 +274,6 @@ const AffiliateLinksPage: React.FC = () => {
       accessorKey: 'campaignName',
       header: 'CAMPAIGN',
       size: 120,
-      minSize: 100,
-      maxSize: 150,
       cell: ({ getValue }) => (
         <span className="text-sm text-gray-700 font-medium block truncate">
           {getValue() as string}
@@ -202,8 +284,6 @@ const AffiliateLinksPage: React.FC = () => {
       accessorKey: 'generatedLink',
       header: 'GENERATED LINK',
       size: 300,
-      minSize: 250,
-      maxSize: 350,
       cell: ({ getValue }) => {
         const link = getValue() as string;
         return (
@@ -239,8 +319,6 @@ const AffiliateLinksPage: React.FC = () => {
       accessorKey: 'createdAt',
       header: 'CREATED',
       size: 120,
-      minSize: 100,
-      maxSize: 140,
       cell: ({ getValue }) => {
         const date = new Date(getValue() as string);
         return (
@@ -252,14 +330,14 @@ const AffiliateLinksPage: React.FC = () => {
     }
   ], []);
 
-  if (loading || campaignsLoading) {
+  if (loading || campaignsLoading || profileLoading) {
     return (
       <div className="space-y-6">
         <Card className="p-6">
           <div className="animate-pulse space-y-4">
             <div className="h-6 bg-gray-200 rounded w-1/4"></div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {[...Array(4)].map((_, i) => (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {[...Array(3)].map((_, i) => (
                 <div key={i} className="h-10 bg-gray-200 rounded"></div>
               ))}
             </div>
@@ -273,35 +351,50 @@ const AffiliateLinksPage: React.FC = () => {
     );
   }
 
+  // Handle case where no domains are available
+  if (!userProfile || !userProfile.domains || userProfile.domains.length === 0) {
+    return (
+      <div className="space-y-6 max-w-full">
+        <Card className="p-6">
+          <div className="text-center py-8">
+            <Icon name="fas fa-exclamation-triangle" className="text-yellow-500 text-4xl mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              No Domains Available
+            </h3>
+            <p className="text-gray-600">
+              You don't have any domains configured in your profile. Please contact support to set up your domains.
+            </p>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 max-w-full">
-      {/* Form Section - Fixed Height */}
+      {/* Form Section */}
       <Card className="p-6">
         <div className="mb-4">
           <h3 className="text-lg font-semibold text-gray-900">
             Generate Affiliate Link
           </h3>
+          {userProfile && (
+            <p className="text-sm text-gray-500 mt-1">
+              Account: {userProfile.username} | Currency: {userProfile.currency}
+            </p>
+          )}
         </div>
 
-        {/* Fixed Layout Structure */}
         <div className="space-y-4">
-          {/* Form Fields Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Form Fields Grid - Domain and Campaign */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="min-w-0">
               <Select
                 label="Domain"
                 value={formData.domain}
                 onChange={(e) => updateValue('domain', e.target.value)}
-                options={DOMAIN_OPTIONS}
-              />
-            </div>
-            
-            <div className="min-w-0">
-              <Select
-                label="Currency"
-                value={formData.currency}
-                onChange={(e) => updateValue('currency', e.target.value)}
-                options={CURRENCY_OPTIONS}
+                options={domainOptions}
+                placeholder="Select a domain..."
               />
             </div>
 
@@ -314,18 +407,53 @@ const AffiliateLinksPage: React.FC = () => {
                   value: c.xid?.toString() || c.name, 
                   label: c.name 
                 })) : []}
-              />
-            </div>
-
-            <div className="min-w-0">
-              <Select
-                label="Landing Page"
-                value={formData.landingPage}
-                onChange={(e) => updateValue('landingPage', e.target.value)}
-                options={LANDING_PAGE_OPTIONS}
+                placeholder="Select a campaign..."
               />
             </div>
           </div>
+
+          {/* Landing Page Section - Same Width as Above */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="min-w-0 sm:col-span-2">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Landing Page
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Input
+                    type="text"
+                    value={formData.landingPage}
+                    onChange={handleLandingPageInputChange}
+                    placeholder="Enter landing page (e.g., /sports/tennis)"
+                    className="h-10"
+                  />
+                  <Select
+                    value={formData.landingPage}
+                    onChange={(e) => handleLandingPageChange(e.target.value)}
+                    options={landingPageOptions}
+                    placeholder="Quick select..."
+                    className="h-10"
+                  />
+                </div>
+                <p className="text-xs text-gray-500">
+                  Type a custom path or select from previously used options. "/" will be auto-prepended.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Preview */}
+          {formData.domain && formData.landingPage && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <div className="flex items-center gap-2">
+                <Icon name="fas fa-eye" className="text-blue-600 text-sm" />
+                <span className="text-sm font-medium text-blue-800">Preview URL:</span>
+              </div>
+              <div className="mt-1 font-mono text-sm text-blue-700">
+                https://{formData.domain}{normalizeLandingPage(formData.landingPage)}
+              </div>
+            </div>
+          )}
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-2 pt-2">
@@ -333,7 +461,7 @@ const AffiliateLinksPage: React.FC = () => {
               icon="fas fa-link"
               onClick={generateLink}
               loading={generatingLink}
-              disabled={generatingLink || !formData.campaign}
+              disabled={generatingLink || !formData.campaign || !formData.domain || !formData.landingPage.trim()}
               size="md"
               className="flex-1 sm:flex-none sm:min-w-[200px]"
             >
@@ -352,7 +480,7 @@ const AffiliateLinksPage: React.FC = () => {
         </div>
       </Card>
 
-      {/* Results Section - Fixed Structure */}
+      {/* Results Section */}
       <Card className="overflow-hidden">
         <div className="flex justify-between items-center p-6 border-b border-gray-200">
           <div>
