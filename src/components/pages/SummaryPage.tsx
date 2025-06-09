@@ -47,8 +47,8 @@ const SummaryPage: React.FC = () => {
     resetFilters,
     isApplying
   } = useFilters(INITIAL_SUMMARY_FILTERS, {
-    onApply: async (filters) => {
-      const data = await generateMockSummaryData(filters);
+    onApply: async () => {
+      const data = await generateMockSummaryData();
       setReportData(data);
     },
     onReset: () => {
@@ -56,7 +56,7 @@ const SummaryPage: React.FC = () => {
     }
   });
 
-  const generateMockSummaryData = async (filters: typeof INITIAL_SUMMARY_FILTERS): Promise<SummaryData> => {
+  const generateMockSummaryData = async (): Promise<SummaryData> => {
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1500));
     

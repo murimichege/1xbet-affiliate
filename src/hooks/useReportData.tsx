@@ -24,7 +24,7 @@ export interface ReportFilters {
 export const useReportData = () => {
   const [reportData, setReportData] = useState<ReportData[]>([]);
 
-  const generateMockReportData = async (filters: ReportFilters): Promise<ReportData[]> => {
+  const generateMockReportData = async (): Promise<ReportData[]> => {
     // make a fake API call
     await new Promise(resolve => setTimeout(resolve, 1000));
     

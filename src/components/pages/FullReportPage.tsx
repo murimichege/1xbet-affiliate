@@ -80,7 +80,9 @@ const FullReportPage: React.FC = () => {
     isApplying
   } = useFilters(INITIAL_FILTERS, {
     onApply: async (filters) => {
-      const data = await generateMockReportData(filters);
+      // Note: filters are ignored in the mock function, but you can log them or use them later
+      console.log('Applying filters:', filters);
+      const data = await generateMockReportData();
       setReportData(data);
     },
     onReset: () => setReportData([])

@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 
-export interface AsyncActionOptions<T, R> {
+export interface AsyncActionOptions<R> {
   onSuccess?: (result: R) => void;
   onError?: (error: Error) => void;
   loadingDelay?: number;
@@ -8,7 +8,7 @@ export interface AsyncActionOptions<T, R> {
 
 export const useAsyncAction = <T extends any[], R>(
   asyncFn: (...args: T) => Promise<R>,
-  options: AsyncActionOptions<T, R> = {}
+  options: AsyncActionOptions<R> = {}
 ) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -17,14 +17,14 @@ export const useAsyncAction = <T extends any[], R>(
   const execute = useCallback(async (...args: T): Promise<R | undefined> => {
     setLoading(true);
     setError(null);
-    
+        
     try {
       // Simulates minimum loading time for better UX
       const [result] = await Promise.all([
         asyncFn(...args),
         options.loadingDelay ? new Promise(resolve => setTimeout(resolve, options.loadingDelay)) : Promise.resolve()
       ]);
-      
+            
       setData(result);
       options.onSuccess?.(result);
       return result;
@@ -43,11 +43,11 @@ export const useAsyncAction = <T extends any[], R>(
     setError(null);
   }, []);
 
-  return { 
-    execute, 
-    loading, 
-    error, 
+  return {
+    execute,
+    loading,
+    error,
     data,
-    reset 
+    reset
   };
 };

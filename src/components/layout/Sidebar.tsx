@@ -17,10 +17,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   navigationItems,
   marketingItems,
   reportItems,
-  activeTab,
   sidebarOpen,
   setSidebarOpen,
-  toggleSidebar,
 }) => {
   const NavSection: React.FC<{
     title: string;
