@@ -7,6 +7,7 @@ import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { copyToClipboard } from '@/utils/helpers';
 import { useCampaigns } from '@/hooks/useCampaign';
 import { CampaignModal } from '@/components/ui/Modal';
+import { useToast } from '@/components/ui';
 import affiliateService, { AffiliateLinkResponse } from '@/services/affiliateService';
 
 interface LinkGenerationForm {
@@ -59,6 +60,7 @@ const AffiliateLinksPage: React.FC = () => {
 
   const { campaigns, loading: campaignsLoading, createCampaign } = useCampaigns();
   const { values: formData, updateValue, reset } = useForm(INITIAL_FORM_DATA);
+  const toast = useToast();
 
   // Load user profile
   useEffect(() => {
@@ -186,6 +188,9 @@ const AffiliateLinksPage: React.FC = () => {
       campaign_id: selectedCampaign.xid || 1
     };
 
+    // Show info toast while generating
+    toast.info('Generating affiliate link...');
+
     const newLinkResponse = await affiliateService.links.create(linkRequest);
     
     const newLink: AffiliateLink = {
@@ -210,11 +215,24 @@ const AffiliateLinksPage: React.FC = () => {
     if (userProfile && userProfile.domains.length > 0) {
       updateValue('domain', userProfile.domains[0].domain);
     }
+
+    // Show success toast
+    toast.success('Affiliate link generated successfully!');
     return newLink;
+  }, {
+    onError: (error) => {
+      // Show error toast
+      toast.error(error.message || 'Failed to generate affiliate link');
+    }
   });
 
   const handleCampaignCreated = (newCampaign: any) => {
-    updateValue('campaign', newCampaign.xid?.toString() || newCampaign.name);
+    try {
+      updateValue('campaign', newCampaign.xid?.toString() || newCampaign.name);
+      toast.success(`Campaign "${newCampaign.name}" created successfully!`);
+    } catch (error) {
+      toast.error('Failed to set the new campaign');
+    }
   };
 
   // Generate domain options from user profile
@@ -506,7 +524,7 @@ const AffiliateLinksPage: React.FC = () => {
               enableGlobalSearch={true}
               searchPlaceholder="Search by domain, campaign, or landing page..."
               pageSize={10}
-              showPagination={links.length > 10}
+              showPagination={true}
               tableClassName="w-full table-fixed"
               density="normal"
             />

@@ -270,7 +270,7 @@ const Header: React.FC<HeaderProps> = ({
                   </div>
                   <div className="flex-1">
                     <p className="text-sm font-semibold text-gray-900">Affiliate Account</p>
-                    <p className="text-xs text-gray-600">ID: 3355447</p>
+                    <p className="text-xs text-gray-600">ID: El967r6</p>
                   </div>
                 </div>
                 

@@ -1,5 +1,5 @@
 import React from 'react';
-import ReactSelect, { MultiValue, SingleValue } from 'react-select';
+import ReactSelect, { MultiValue } from 'react-select';
 
 export interface SelectOption {
   value: string;

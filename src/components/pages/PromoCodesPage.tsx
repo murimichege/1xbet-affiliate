@@ -7,6 +7,7 @@ import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { copyToClipboard } from '@/utils/helpers';
 import { useCampaigns } from '@/hooks/useCampaign';
 import { CampaignModal } from '@/components/ui/Modal';
+import { useToast } from '@/components/ui';
 import affiliateService, { PromoCodeResponse } from '@/services/affiliateService';
 
 interface PromoCodeForm {
@@ -34,6 +35,7 @@ const PromoCodesPage: React.FC = () => {
     campaign: '',
     code: ''
   });
+  const toast = useToast();
 
   // Load initial data
   useEffect(() => {
@@ -63,6 +65,7 @@ const PromoCodesPage: React.FC = () => {
       setPromoCodes(transformedPromoCodes);
     } catch (error) {
       console.error('Error loading promo codes:', error);
+      toast.error('Failed to load promo codes. Please try refreshing the page.');
       setPromoCodes([]);
     } finally {
       setLoading(false);
@@ -70,44 +73,65 @@ const PromoCodesPage: React.FC = () => {
   };
 
   const { execute: generatePromoCode, loading: generatingPromo } = useAsyncAction(async () => {
-    if (!formData.campaign) {
-      throw new Error('Please select a campaign first');
+    try {
+      if (!formData.campaign) {
+        throw new Error('Please select a campaign first');
+      }
+
+      const campaignsArray = Array.isArray(campaigns) ? campaigns : [];
+      const selectedCampaign = campaignsArray.find(c => 
+        c.xid?.toString() === formData.campaign || c.name === formData.campaign
+      );
+      
+      if (!selectedCampaign) {
+        throw new Error('Selected campaign not found');
+      }
+
+      const promoRequest = {
+        code: formData.code, 
+        campaign_id: selectedCampaign.xid || 1
+      };
+
+      const newPromoCodeResponse = await affiliateService.promoCodes.create(promoRequest);
+      
+      // Transform API response to UI format
+      const transformedPromoCode: PromoCode = {
+        xid: newPromoCodeResponse.xid,
+        userId: newPromoCodeResponse.user_id,
+        code: newPromoCodeResponse.code,
+        campaignId: newPromoCodeResponse.campaign_id,
+        campaignName: selectedCampaign.name,
+        status: newPromoCodeResponse.status,
+        createdAt: newPromoCodeResponse.created_at
+      };
+
+      setPromoCodes(prev => [transformedPromoCode, ...prev]);
+      reset();
+      
+      // Success toast
+      toast.success(`Promo code "${transformedPromoCode.code}" generated successfully!`);
+      
+      return newPromoCodeResponse;
+    } catch (error: any) {
+      // Error toast
+      const errorMessage = error?.message || 'Failed to generate promo code. Please try again.';
+      toast.error(errorMessage);
+      throw error;
     }
-
-    const campaignsArray = Array.isArray(campaigns) ? campaigns : [];
-    const selectedCampaign = campaignsArray.find(c => 
-      c.xid?.toString() === formData.campaign || c.name === formData.campaign
-    );
-    
-    if (!selectedCampaign) {
-      throw new Error('Selected campaign not found');
-    }
-
-    const promoRequest = {
-      code: formData.code, 
-      campaign_id: selectedCampaign.xid || 1
-    };
-
-    const newPromoCodeResponse = await affiliateService.promoCodes.create(promoRequest);
-    
-    // Transform API response to UI format
-    const transformedPromoCode: PromoCode = {
-      xid: newPromoCodeResponse.xid,
-      userId: newPromoCodeResponse.user_id,
-      code: newPromoCodeResponse.code,
-      campaignId: newPromoCodeResponse.campaign_id,
-      campaignName: selectedCampaign.name,
-      status: newPromoCodeResponse.status,
-      createdAt: newPromoCodeResponse.created_at
-    };
-
-    setPromoCodes(prev => [transformedPromoCode, ...prev]);
-    reset();
-    return newPromoCodeResponse;
   });
+
+  const handleCopyPromoCode = async (code: string) => {
+    try {
+      await copyToClipboard(code);
+      toast.success(`Promo code "${code}" copied to clipboard!`);
+    } catch (error) {
+      toast.error('Failed to copy promo code to clipboard');
+    }
+  };
 
   const handleCampaignCreated = (newCampaign: any) => {
     updateValue('campaign', newCampaign.xid?.toString() || newCampaign.name);
+    toast.success(`Campaign "${newCampaign.name}" created successfully!`);
   };
 
   const promoColumns = useMemo<ColumnDef<PromoCode>[]>(() => [
@@ -138,7 +162,7 @@ const PromoCodesPage: React.FC = () => {
               size="sm" 
               variant="ghost" 
               className="h-6 w-6 p-0 flex-shrink-0" 
-              onClick={() => copyToClipboard(code)} 
+              onClick={() => handleCopyPromoCode(code)} 
               title="Copy promo code"
             >
               <Icon name="fas fa-copy" className="text-xs" />
@@ -311,7 +335,7 @@ const PromoCodesPage: React.FC = () => {
               enableGlobalSearch 
               searchPlaceholder="Search by code, campaign, or BTAG..." 
               pageSize={10} 
-              showPagination={promoCodes.length > 10}
+              showPagination={true}
               tableClassName="w-full table-fixed" 
               density="normal" 
             />
