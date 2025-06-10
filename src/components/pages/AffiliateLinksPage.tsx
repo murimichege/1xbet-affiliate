@@ -259,36 +259,6 @@ const AffiliateLinksPage: React.FC = () => {
       )
     },
     {
-      accessorKey: 'domain',
-      header: 'DOMAIN',
-      size: 150,
-      cell: ({ getValue }) => {
-        const domain = getValue() as string;
-        const fullUrl = `https://${domain}`;
-        return (
-          <a
-            href={fullUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:text-blue-800 block truncate"
-            title={fullUrl}
-          >
-            {domain}
-          </a>
-        );
-      }
-    },
-    {
-      accessorKey: 'landingPage',
-      header: 'LANDING PAGE',
-      size: 150,
-      cell: ({ getValue }) => (
-        <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded block truncate">
-          {getValue() as string}
-        </span>
-      )
-    },
-    {
       accessorKey: 'campaignName',
       header: 'CAMPAIGN',
       size: 120,
