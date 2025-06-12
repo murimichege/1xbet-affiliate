@@ -8,7 +8,7 @@ const internalApiBaseURL = import.meta.env.VITE_INTERNAL_API_BASE_URL;
 const cookieValue = import.meta.env.VITE_BETKUMI_COOKIE;
 const hostValue = import.meta.env.VITE_HOST;
 
-// ✅ Set cookie in browser
+// Set cookie in browser
 if (cookieValue) {
   cookies.set('ta', cookieValue, {
     path: '/',
@@ -24,14 +24,14 @@ if (cookieValue) {
 export const apiClient = axios.create({
   baseURL,
   timeout: 10000,
-  withCredentials: true, // Important for sending cookies
+  withCredentials: true, // Important for sending cookies when using axios
   headers: {
     'Content-Type': 'application/json',
     'Accept-Api-Version': '70',
   },
 });
 
-// 🔍 REQUEST INTERCEPTOR
+//  REQUEST INTERCEPTOR
 apiClient.interceptors.request.use(config => {
   // Add the cookie manually to headers as backup
   if (cookieValue) {
@@ -48,7 +48,7 @@ apiClient.interceptors.request.use(config => {
   return config;
 });
 
-// 🔍 RESPONSE INTERCEPTOR
+//RESPONSE INTERCEPTOR
 apiClient.interceptors.response.use(
   res => {
     return res;

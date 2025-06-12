@@ -1,7 +1,7 @@
 import React from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { useSidebar } from '@/hooks';
-import { Header, Footer, Sidebar } from './components/layout';
+import { Header, Footer, Sidebar } from './components/layouts';
 import { Card, Icon } from '@/components/ui';
 import { 
   MainPage,

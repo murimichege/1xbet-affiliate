@@ -1,10 +1,11 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { DataTable } from '@/components/common/Datatable';
 import { STATS_TABLE_DATA } from '@/data/dummyData';
 import { StatCard } from '../common';
 import { Card } from '../ui';
 import { ColumnDef } from '@tanstack/react-table';
-import affiliateService, { AffiliateSummary } from '@/services/affiliateService';
+import { useResourceManager } from '@/hooks/useResourceManager';
+import { formatCurrency } from '@/utils/formatters';
 
 interface StatsTableData {
   currency: string;
@@ -19,201 +20,17 @@ interface StatsTableData {
   commissionAmount: number;
 }
 
-interface ProfileStats {
-  username: string;
-  currency: string;
-  country: string;
-  fixedPay: number;
-  revShare: number;
-  domain: string;
-  memberSince: number;
-}
-
-interface StatCardData {
-  id: string;
-  label: string;
-  value: string;
-  icon: string;
-  color: string;
-  bgColor: string;
-}
-
 const MainPage: React.FC = () => {
   const [selectedTimeframe, setSelectedTimeframe] = useState('Yesterday');
-  const [profileStats, setProfileStats] = useState<ProfileStats | null>(null);
-  const [summaryData, setSummaryData] = useState<AffiliateSummary | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [summaryLoading, setSummaryLoading] = useState(true);
-
-  // Load profile data
-  useEffect(() => {
-    const loadStats = async () => {
-      try {
-        setLoading(true);
-        const profile = await affiliateService.profile.get();
-        
-        // Map profile data to stats
-        const stats: ProfileStats = {
-          username: profile.username,
-          currency: profile.currency,
-          country: profile.country?.toUpperCase() || 'N/A',
-          fixedPay: profile.fixed_pay,
-          revShare: profile.rev_share * 100, 
-          domain: profile.domains?.[0]?.domain || 'N/A',
-          memberSince: new Date(profile.created_at).getFullYear()
-        };
-
-        setProfileStats(stats);
-      } catch (error) {
-        console.error('Error loading stats:', error);
-        setProfileStats({
-          username: 'Unknown',
-          currency: 'USD',
-          country: 'N/A',
-          fixedPay: 0,
-          revShare: 0,
-          domain: 'N/A',
-          memberSince: new Date().getFullYear()
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadStats();
-  }, []);
-
-  // Load summary data
-  useEffect(() => {
-    const loadSummaryData = async () => {
-      try {
-        setSummaryLoading(true);
-        const summaryResponse = await affiliateService.summary.get();
-        
-        // Take the first item from the array (assuming single currency)
-        if (Array.isArray(summaryResponse) && summaryResponse.length > 0) {
-          setSummaryData(summaryResponse[0]);
-        } else {
-          setSummaryData(null);
-        }
-      } catch (error) {
-        console.error('Error loading summary data:', error);
-        setSummaryData(null);
-      } finally {
-        setSummaryLoading(false);
-      }
-    };
-
-    loadSummaryData();
-  }, []);
-
-  // Generate stat cards from profile data (only fixed_pay and rev_share)
-  const getMainPageStats = (): StatCardData[] => {
-    if (!profileStats) return [];
-
-    return [
-      {
-        id: 'fixed-pay',
-        label: 'FIXED PAY',
-        value: `${profileStats.currency} ${profileStats.fixedPay.toFixed(2)}`,
-        icon: 'fas fa-money-bill',
-        color: 'text-green-600',
-        bgColor: 'bg-green-50'
-      },
-      {
-        id: 'rev-share',
-        label: 'REVENUE SHARE',
-        value: `${profileStats.revShare}%`,
-        icon: 'fas fa-percentage',
-        color: 'text-purple-600',
-        bgColor: 'bg-purple-50'
-      }
-    ];
-  };
-
-  // Generate stat cards from summary data
-  const getSummaryStats = (): StatCardData[] => {
-    // Provide fallback values when summary data is not available
-    const fallbackSummary = {
-      currency: profileStats?.currency || 'USD',
-      yesterday: 0,
-      last_30_days: 0,
-      this_month: 0,
-      all_time: 0,
-      paid: 0,
-      last_paid_at: null
-    };
-
-    const data = summaryData || fallbackSummary;
-
-    const formatCurrency = (amount: number | null | undefined) => {
-      const safeAmount = amount || 0;
-      return `${data.currency} ${safeAmount.toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      })}`;
-    };
-
-    const formatLastPaid = () => {
-      if (!data.last_paid_at) return 'Never';
-      try {
-        return new Date(data.last_paid_at).toLocaleDateString();
-      } catch {
-        return 'Never';
-      }
-    };
-
-    return [
-      {
-        id: 'yesterday',
-        label: 'YESTERDAY',
-        value: formatCurrency(data.yesterday),
-        icon: 'fas fa-calendar-day',
-        color: 'text-blue-600',
-        bgColor: 'bg-blue-50'
-      },
-      {
-        id: 'last-30-days',
-        label: 'LAST 30 DAYS',
-        value: formatCurrency(data.last_30_days),
-        icon: 'fas fa-calendar-month',
-        color: 'text-indigo-600',
-        bgColor: 'bg-indigo-50'
-      },
-      {
-        id: 'this-month',
-        label: 'THIS MONTH',
-        value: formatCurrency(data.this_month),
-        icon: 'fas fa-calendar',
-        color: 'text-cyan-600',
-        bgColor: 'bg-cyan-50'
-      },
-      {
-        id: 'all-time',
-        label: 'ALL TIME',
-        value: formatCurrency(data.all_time),
-        icon: 'fas fa-infinity',
-        color: 'text-emerald-600',
-        bgColor: 'bg-emerald-50'
-      },
-      {
-        id: 'paid',
-        label: 'TOTAL PAID',
-        value: formatCurrency(data.paid),
-        icon: 'fas fa-hand-holding-dollar',
-        color: 'text-green-600',
-        bgColor: 'bg-green-50'
-      },
-      {
-        id: 'last-paid',
-        label: 'LAST PAID',
-        value: formatLastPaid(),
-        icon: 'fas fa-clock',
-        color: 'text-orange-600',
-        bgColor: 'bg-orange-50'
-      }
-    ];
-  };
+  
+  const { 
+    profileStats, 
+    summaryStats, 
+    profileInfo, 
+    isLoading,
+    profileLoading, 
+    summaryLoading 
+  } = useResourceManager('main-page-stats');
 
   const statsTableColumns = useMemo<ColumnDef<StatsTableData>[]>(() => [
     {
@@ -285,10 +102,7 @@ const MainPage: React.FC = () => {
         const currency = row.original.currency;
         return (
           <span className="font-semibold text-green-600 text-xs sm:text-sm">
-            {currency} {value.toLocaleString(undefined, {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2
-            })}
+            {formatCurrency(value, currency)}
           </span>
         );
       }
@@ -310,7 +124,7 @@ const MainPage: React.FC = () => {
         const currency = row.original.currency;
         return (
           <span className="text-xs sm:text-sm">
-            {currency} {value.toFixed(2)}
+            {formatCurrency(value, currency)}
           </span>
         );
       }
@@ -324,53 +138,74 @@ const MainPage: React.FC = () => {
         const currency = row.original.currency;
         return (
           <span className="font-semibold text-blue-600 text-xs sm:text-sm">
-            {currency} {value.toLocaleString(undefined, {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2
-            })}
+            {formatCurrency(value, currency)}
           </span>
         );
       }
     },
   ], []);
 
+  // Show loading state if main data is loading
+  if (isLoading) {
+    return (
+      <div className="space-y-4 sm:space-y-6 w-full max-w-full">
+        <div className="animate-pulse">
+          <div className="bg-gray-200 rounded-lg h-20 mb-6"></div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+            <div className="bg-gray-200 rounded-lg h-24"></div>
+            <div className="bg-gray-200 rounded-lg h-24"></div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="bg-gray-200 rounded-lg h-24"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4 sm:space-y-6 w-full max-w-full">
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
       
       {/* Welcome Message */}
-      {profileStats && (
+      {profileInfo && (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
           <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">
-            Welcome, {profileStats.username}!
+            Welcome, {profileInfo.username}!
           </h2>
           <p className="text-gray-600 mt-1 text-sm sm:text-base">
-            Affiliate Dashboard - {profileStats.country} ({profileStats.domain})
+            Affiliate Dashboard - {profileInfo.country} ({profileInfo.domain}) | Member since {profileInfo.memberSince}
           </p>
         </div>
       )}
       
       {/* Statistics Cards - Profile Stats (Fixed Pay and Revenue Share) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-        {getMainPageStats().map((card) => (
-          <StatCard 
-            key={card.id} 
-            data={card} 
-            loading={loading}
-          />
-        ))}
-      </div>
+      {profileStats && profileStats.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+          {profileStats.map((card) => (
+            <StatCard 
+              key={card.id} 
+              data={card} 
+              loading={profileLoading}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Summary Statistics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-        {getSummaryStats().map((card) => (
-          <StatCard 
-            key={card.id} 
-            data={card} 
-            loading={summaryLoading}
-          />
-        ))}
-      </div>
+      {summaryStats && summaryStats.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          {summaryStats.map((card) => (
+            <StatCard 
+              key={card.id} 
+              data={card} 
+              loading={summaryLoading}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Stats Summary Table */}
       <Card className="p-4 sm:p-6 overflow-hidden">

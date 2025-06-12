@@ -1,4 +1,4 @@
-import { FilterField } from '@/components/common/ReportFilters';
+import { FilterField } from '@/components/filters/FilterOptions';
 import { PlayerReportFilters } from '@/hooks/usePlayerReport';
 import { 
   CURRENCIES, 

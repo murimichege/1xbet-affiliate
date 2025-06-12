@@ -18,7 +18,7 @@ export function TableBody<T>({
       {table.getRowModel().rows.map(row => (
         <tr
           key={row.id}
-          className={`transition-colors ${onRowClick ? 'cursor-pointer hover:bg-gray-50' : ''} ${row.getIsSelected() ? 'bg-blue-50' : ''}`}
+          className={`transition-colors hover:bg-blue-50 ${onRowClick ? 'cursor-pointer' : ''} ${row.getIsSelected() ? 'bg-blue-50' : ''}`}
           onClick={() => onRowClick?.(row.original)}
         >
           {row.getVisibleCells().map(cell => (

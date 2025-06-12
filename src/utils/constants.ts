@@ -35,22 +35,3 @@ export const LANGUAGES = [
   'Russian',
   'Chinese'
 ] as const;
-
-export const WEBSITE_CATEGORIES = [
-  'Sports predictions',
-  'Sports news', 
-  'Bookmakers and bets',
-  'Sports broadcasts',
-  'Casino',
-  'Sports',
-  'Other',
-  'Facebook'
-] as const;
-
-export const PAYMENT_STATUSES = [
-  'Pending',
-  'Processing', 
-  'Completed',
-  'Failed',
-  'Cancelled'
-] as const;

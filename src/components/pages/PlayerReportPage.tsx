@@ -4,7 +4,7 @@ import { Card, Button } from '@/components/ui';
 import { CurrencyCell } from '@/components/ui/CurrencyCell';
 import { PlayerIdCell } from '@/components/ui/PlayerIdCell';
 import { WebsiteCell } from '@/components/ui/WebsiteCell';
-import { ReportFilters } from '@/components/common/ReportFilters';
+import { ReportFilters } from '@/components/filters/FilterOptions';
 import { ColumnDef } from '@tanstack/react-table';
 import { useFilters } from '@/hooks/useFilters';
 import { useAsyncAction } from '@/hooks/useAsyncAction';

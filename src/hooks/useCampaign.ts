@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import affiliateService, { Campaign, CreateCampaignRequest } from '@/services/affiliateService';
+import affiliateService from '@/services/affiliateService';
+import { Campaign, CreateCampaignRequest } from '@/types/affiliate';
 
 export const useCampaigns = () => {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);

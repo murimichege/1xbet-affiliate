@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { DataTable } from '@/components/common/Datatable';
 import { Card, Button } from '@/components/ui';
 import { CurrencyCell } from '@/components/ui/CurrencyCell';
-import { ReportFilters, FilterField } from '@/components/common/ReportFilters';
+import { ReportFilters, FilterField } from '@/components/filters/FilterOptions';
 import { ColumnDef } from '@tanstack/react-table';
 import { useFilters } from '@/hooks/useFilters';
 import { useAsyncAction } from '@/hooks/useAsyncAction';

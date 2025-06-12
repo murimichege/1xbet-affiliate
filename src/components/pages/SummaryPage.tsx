@@ -1,13 +1,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Card, Button, Icon } from '@/components/ui';
-import { SummaryReportFilters, FilterField } from '@/components/common/ReportFilters';
+import { SummaryReportFilters, FilterField } from '@/components/filters/FilterOptions';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { exportToCSV } from '@/utils/csvExport';
-import affiliateService, {
-  QuickReportResponse,
-  AffiliateLinkResponse,
-  PromoCodeResponse
-} from '@/services/affiliateService';
+import affiliateService from '@/services/affiliateService';
+import { QuickReportResponse, AffiliateLinkResponse, PromoCodeResponse } from '@/types/affiliate';
 
 interface ReportFilters {
   links: string[];
@@ -49,7 +46,6 @@ const SummaryPage: React.FC = () => {
   const [availablePromos, setAvailablePromos] = useState<PromoCodeResponse[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(true);
 
-  // Load links and promo codes on mount
   useEffect(() => {
     const loadOptions = async () => {
       try {
@@ -274,7 +270,6 @@ const SummaryPage: React.FC = () => {
                 <li>• Expand the date range to include more days</li>
                 <li>• Remove link or promo code filters to include all data</li>
                 <li>• Check if the selected links/promos had activity during this period</li>
-                <li>• Verify that the date range includes business days</li>
               </ul>
             </div>
           </div>

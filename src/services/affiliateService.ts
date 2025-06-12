@@ -1,129 +1,22 @@
 import { apiClient } from '@/config/api';
+import type {
+  Campaign,
+  CampaignCreateRequest,
+  AffiliateLinkCreateRequest,
+  AffiliateLinkApiResponse,
+  UpdateAffiliateLinkRequest,
+  PromoCodeCreateRequest,
+  PromoCodeApiResponse,
+  UserProfile,
+  AffiliateSummary,
+  QuickReportParams,
+  QuickReportResponse,
+  ReferralData,
+  ReferralParams
+} from '@/types/affiliate';
 
 const AFFILIATE_USER_ID = '276004';
 const AFFILIATE_BASE_PATH = `/affiliates/${AFFILIATE_USER_ID}`;
-
-
-// Campaign interfaces
-export interface Campaign {
-  user_id?: number;
-  xid?: number;
-  name: string;
-  created_at?: string;
-}
-
-export interface CreateCampaignRequest {
-  name: string;
-}
-
-// Affiliate Link interfaces
-export interface CreateAffiliateLinkRequest {
-  domain: string;
-  landing_page: string;
-  campaign_id: number;
-}
-
-export interface AffiliateLinkResponse {
-  url: string;
-  user_id: number;
-  xid: number;
-  domain: string;
-  landing_page: string;
-  campaign_id: number;
-  created_at: string;
-}
-
-export interface UpdateAffiliateLinkRequest {
-  domain?: string;
-  landing_page?: string;
-  campaign_id?: number;
-}
-
-// Promo Code interfaces
-export interface PromoCodeRequest {
-  code: string;
-  campaign_id: number;
-}
-
-export interface PromoCodeResponse {
-  user_id: number;
-  xid: number;
-  code: string;
-  campaign_id: number;
-  created_at: string;
-  status: string;
-}
-
-export interface CreatePromoCodeRequest {
-  code: string;
-  campaign_id: number;
-}
-
-// Profile interfaces
-export interface AffiliateProfile {
-  user_id: number;
-  currency: string;
-  fixed_pay: number;
-  rev_share: number;
-  created_at: string;
-  username: string;
-  domains: Array<{
-    domain: string;
-    country: string;
-  }>;
-  country: string;
-  is_manager: boolean;
-}
-
-// Summary interfaces
-export interface AffiliateSummary {
-  currency: string;
-  yesterday: number;
-  last_30_days: number;
-  this_month: number;
-  all_time: number;
-  paid: number;
-  last_paid_at: string;
-}
-
-// Reports interfaces
-export interface QuickReportParams {
-  links?: number[];
-  promos?: number[];
-  start: string;
-  end: string;
-}
-
-export interface QuickReportResponse {
-  currency: string;
-  new_account_count: number;
-  new_account_with_deposit_count: number;
-  new_deposit_count: number;
-  new_deposit_sum: number;
-  new_deposit_account_count: number;
-  deposit_sum: number;
-  deposit_count: number;
-  deposit_account_count: number;
-  active_account_count: number;
-  commission: number;
-}
-
-// Referral interfaces
-export interface ReferralData {
-  user_id: number;
-  username: string;
-  created_at: string;
-  commission: number;
-  currency: string;
-}
-
-export interface ReferralParams {
-  limit?: number;
-  dir?: 'asc' | 'desc';
-  page?: number;
-  date_from?: string;
-  date_to?: string;
-}
 
 // ==================== SERVICE IMPLEMENTATION ====================
 
@@ -133,7 +26,7 @@ export const affiliateService = {
     /**
      * Create a new campaign
      */
-    async create(campaignData: CreateCampaignRequest): Promise<Campaign> {
+    async create(campaignData: CampaignCreateRequest): Promise<Campaign> {
       const response = await apiClient.post(`${AFFILIATE_BASE_PATH}/campaigns`, campaignData);
       return response.data;
     },
@@ -157,7 +50,7 @@ export const affiliateService = {
     /**
      * Update a campaign
      */
-    async update(campaignId: string, campaignData: Partial<CreateCampaignRequest>): Promise<Campaign> {
+    async update(campaignId: string, campaignData: Partial<CampaignCreateRequest>): Promise<Campaign> {
       const response = await apiClient.put(`${AFFILIATE_BASE_PATH}/campaigns/${campaignId}`, campaignData);
       return response.data;
     },
@@ -175,7 +68,7 @@ export const affiliateService = {
     /**
      * Create a new affiliate link
      */
-    async create(linkData: CreateAffiliateLinkRequest): Promise<AffiliateLinkResponse> {
+    async create(linkData: AffiliateLinkCreateRequest): Promise<AffiliateLinkApiResponse> {
       const response = await apiClient.post(`${AFFILIATE_BASE_PATH}/links`, linkData);
       return response.data;
     },
@@ -183,7 +76,7 @@ export const affiliateService = {
     /**
      * Get all affiliate links for the affiliate
      */
-    async getAll(): Promise<AffiliateLinkResponse[]> {
+    async getAll(): Promise<AffiliateLinkApiResponse[]> {
       const response = await apiClient.get(`${AFFILIATE_BASE_PATH}/links`);
       return response.data;
     },
@@ -191,7 +84,7 @@ export const affiliateService = {
     /**
      * Get a specific affiliate link by ID
      */
-    async getById(linkId: string): Promise<AffiliateLinkResponse> {
+    async getById(linkId: string): Promise<AffiliateLinkApiResponse> {
       const response = await apiClient.get(`${AFFILIATE_BASE_PATH}/links/${linkId}`);
       return response.data;
     },
@@ -199,7 +92,7 @@ export const affiliateService = {
     /**
      * Update an affiliate link
      */
-    async update(linkId: string, linkData: UpdateAffiliateLinkRequest): Promise<AffiliateLinkResponse> {
+    async update(linkId: string, linkData: UpdateAffiliateLinkRequest): Promise<AffiliateLinkApiResponse> {
       const response = await apiClient.put(`${AFFILIATE_BASE_PATH}/links/${linkId}`, linkData);
       return response.data;
     },
@@ -217,7 +110,7 @@ export const affiliateService = {
     /**
      * Create a new promo code
      */
-    async create(promoData: CreatePromoCodeRequest): Promise<PromoCodeResponse> {
+    async create(promoData: PromoCodeCreateRequest): Promise<PromoCodeApiResponse> {
       const response = await apiClient.post(`${AFFILIATE_BASE_PATH}/promo-codes`, promoData);
       return response.data;
     },
@@ -225,7 +118,7 @@ export const affiliateService = {
     /**
      * Get all promo codes for the affiliate
      */
-    async getAll(): Promise<PromoCodeResponse[]> {
+    async getAll(): Promise<PromoCodeApiResponse[]> {
       const response = await apiClient.get(`${AFFILIATE_BASE_PATH}/promo-codes`);
       return response.data;
     },
@@ -233,7 +126,7 @@ export const affiliateService = {
     /**
      * Get a specific promo code by ID
      */
-    async getById(promoCodeId: string): Promise<PromoCodeResponse> {
+    async getById(promoCodeId: string): Promise<PromoCodeApiResponse> {
       const response = await apiClient.get(`${AFFILIATE_BASE_PATH}/promo-codes/${promoCodeId}`);
       return response.data;
     },
@@ -241,7 +134,7 @@ export const affiliateService = {
     /**
      * Update a promo code
      */
-    async update(promoCodeId: string, promoData: Partial<CreatePromoCodeRequest>): Promise<PromoCodeResponse> {
+    async update(promoCodeId: string, promoData: Partial<PromoCodeCreateRequest>): Promise<PromoCodeApiResponse> {
       const response = await apiClient.put(`${AFFILIATE_BASE_PATH}/promo-codes/${promoCodeId}`, promoData);
       return response.data;
     },
@@ -256,7 +149,7 @@ export const affiliateService = {
     /**
      * Toggle promo code status (active/inactive)
      */
-    async toggleStatus(promoCodeId: string): Promise<PromoCodeResponse> {
+    async toggleStatus(promoCodeId: string): Promise<PromoCodeApiResponse> {
       const response = await apiClient.patch(`${AFFILIATE_BASE_PATH}/promo-codes/${promoCodeId}/toggle`);
       return response.data;
     }
@@ -267,7 +160,7 @@ export const affiliateService = {
     /**
      * Get affiliate profile information
      */
-    async get(): Promise<AffiliateProfile> {
+    async get(): Promise<UserProfile> {
       const response = await apiClient.get(`${AFFILIATE_BASE_PATH}/profile`);
       return response.data;
     },
@@ -275,7 +168,7 @@ export const affiliateService = {
     /**
      * Update affiliate profile
      */
-    async update(profileData: Partial<AffiliateProfile>): Promise<AffiliateProfile> {
+    async update(profileData: Partial<UserProfile>): Promise<UserProfile> {
       const response = await apiClient.put(`${AFFILIATE_BASE_PATH}/profile`, profileData);
       return response.data;
     }

@@ -1,4 +1,4 @@
-import { Campaign } from '@/services/affiliateService';
+import { Campaign } from '@/types/affiliate';
 
 export const findCampaignById = (campaigns: Campaign[], campaignId: string): Campaign | undefined => {
   if (!Array.isArray(campaigns)) return undefined;
