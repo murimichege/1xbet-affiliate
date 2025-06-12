@@ -7,4 +7,4 @@ export { default as CommissionStructurePage } from './CommissionStructure';
 
 export { default as FullReportPage } from './FullReportPage';
 export { default as PlayerReportPage } from './PlayerReportPage';
-export { default as SummaryPage } from './SummaryPage';
+export { default as SummaryPage } from './SummaryReportPage';

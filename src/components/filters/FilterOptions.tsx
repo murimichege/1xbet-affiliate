@@ -1,10 +1,12 @@
 import React from 'react';
 import { Card, Button, Select, Input, Icon } from '@/components/ui';
+import 'react-datepicker/dist/react-datepicker.css';
+import DatePicker from 'react-datepicker';
 
 export interface FilterField {
   key: string;
   label: string;
-  type: 'select' | 'multiselect' | 'text' | 'date' | 'dual-input';
+  type: 'select' | 'multiselect' | 'text' | 'date' | 'dual-input' | 'datetime-local';
   options?: string[];
   placeholder?: string;
   className?: string;
@@ -42,24 +44,25 @@ export const ReportFilters = <T extends Record<string, any>>({
   showActions = false,
   children
 }: ReportFiltersProps<T>) => {
-  
+  const sharedInputClass = 'h-10 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring focus:ring-blue-500 placeholder:text-gray-400';
+
   const renderField = (field: FilterField) => {
     const value = filters[field.key] || (field.type === 'multiselect' ? [] : '');
-    
+
     const commonProps = {
       label: field.label,
       disabled: isLoading,
       className: field.className || '',
       placeholder: field.placeholder
     };
-    
+
     switch (field.type) {
       case 'select':
         return (
           <Select
             {...commonProps}
             value={value as string}
-            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => 
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
               onFilterChange(field.key as keyof T, e.target.value as T[keyof T])
             }
             options={field.options?.map(opt => {
@@ -73,14 +76,14 @@ export const ReportFilters = <T extends Record<string, any>>({
             }) || []}
           />
         );
-        
+
       case 'multiselect':
         return (
           <Select
             {...commonProps}
             multiple
             value={value as string[]}
-            onChange={(selectedValues: string[]) => 
+            onChange={(selectedValues: string[]) =>
               onFilterChange(field.key as keyof T, selectedValues as T[keyof T])
             }
             options={field.options?.map(opt => {
@@ -94,71 +97,92 @@ export const ReportFilters = <T extends Record<string, any>>({
             }) || []}
           />
         );
-        
+
       case 'date':
         return (
           <Input
             {...commonProps}
             type="date"
             value={value as string}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               onFilterChange(field.key as keyof T, e.target.value as T[keyof T])
             }
           />
         );
-
-      case 'dual-input':
-        return (
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">
-              {field.label}
-            </label>
-            <div className="grid grid-cols-2 gap-2">
-              <Input
-                type="text"
-                value={value as string}
-                onChange={(e) => onFilterChange(field.key as keyof T, e.target.value as T[keyof T])}
-                placeholder={field.placeholder}
-                className="h-10"
-                disabled={isLoading}
-              />
-              <Select
-                value={value as string}
-                onChange={(e) => {
-                  const normalizedValue = field.key === 'landingPage' 
-                    ? normalizeLandingPage(e.target.value)
-                    : e.target.value;
-                  onFilterChange(field.key as keyof T, normalizedValue as T[keyof T]);
-                }}
-                options={field.options?.map(opt => {
-                  if (opt.includes(':')) {
-                    const colonIndex = opt.indexOf(':');
-                    const optValue = opt.substring(0, colonIndex);
-                    const optLabel = opt.substring(colonIndex + 1);
-                    return { value: optValue, label: optLabel };
+        case 'datetime-local':
+          return (
+            <div className="w-full">
+              <label className="block text-sm font-medium text-gray-700 mb-1">{field.label}</label>
+              <DatePicker
+                selected={value as Date}
+                onChange={(date: Date | null) => {
+                  if (date) {
+                    onFilterChange(field.key as keyof T, date as T[keyof T]);
                   }
-                  return { value: opt, label: opt };
-                }) || []}
-                placeholder={field.secondaryPlaceholder || "Quick select..."}
-                className="h-10"
-                disabled={isLoading}
+                }}
+                showTimeSelect
+                timeFormat="HH:mm"
+                timeIntervals={15}
+                dateFormat="yyyy-MM-dd HH:mm"
+                placeholderText={field.placeholder}
+                className={sharedInputClass}
               />
             </div>
-            {field.key === 'landingPage' && (
-              <p className="text-xs text-gray-500">
-                Type a custom path or select from previously used options. "/" will be auto-prepended.
-              </p>
-            )}
-          </div>
-        );
+          );
         
+          case 'dual-input':
+            return (
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  {field.label}
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Input
+                    type="text"
+                    value={value as string}
+                    onChange={(e) => onFilterChange(field.key as keyof T, e.target.value as T[keyof T])}
+                    placeholder={field.placeholder}
+                    className={sharedInputClass}
+                    disabled={isLoading}
+                  />
+                  <Select
+                    value={value as string}
+                    onChange={(e) => {
+                      const normalizedValue =
+                        field.key === 'landingPage'
+                          ? normalizeLandingPage(e.target.value)
+                          : e.target.value;
+                      onFilterChange(field.key as keyof T, normalizedValue as T[keyof T]);
+                    }}
+                    options={field.options?.map((opt) => {
+                      if (opt.includes(':')) {
+                        const colonIndex = opt.indexOf(':');
+                        const optValue = opt.substring(0, colonIndex);
+                        const optLabel = opt.substring(colonIndex + 1);
+                        return { value: optValue, label: optLabel };
+                      }
+                      return { value: opt, label: opt };
+                    }) || []}
+                    placeholder={field.secondaryPlaceholder || 'Quick select...'}
+                    className={sharedInputClass}
+                    disabled={isLoading}
+                  />
+                </div>
+                {field.key === 'landingPage' && (
+                  <p className="text-xs text-gray-500">
+                    Type a custom path or select from previously used options. "/" will be auto-prepended.
+                  </p>
+                )}
+              </div>
+            );
+          
       default:
         return (
           <Input
             {...commonProps}
             type="text"
             value={value as string}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               onFilterChange(field.key as keyof T, e.target.value as T[keyof T])
             }
           />
@@ -201,7 +225,7 @@ export const ReportFilters = <T extends Record<string, any>>({
   };
 
   const config = getLayoutConfig();
-  
+
   const dateFields = fields.filter(field => field.type === 'date');
   const standardFields = fields.filter(field => !['date', 'dual-input'].includes(field.type));
   const specialFields = fields.filter(field => field.type === 'dual-input');
@@ -216,7 +240,7 @@ export const ReportFilters = <T extends Record<string, any>>({
           </p>
         </div>
       )}
-      
+
       <div className="space-y-6">
         {dateFields.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -250,9 +274,9 @@ export const ReportFilters = <T extends Record<string, any>>({
       {showActions && (onApply || onReset) && (
         <div className={`mt-6 pt-4 flex gap-3 ${config.buttonLayout}`}>
           {onApply && (
-            <Button 
-              onClick={onApply} 
-              icon="fas fa-chart-line" 
+            <Button
+              onClick={onApply}
+              icon="fas fa-chart-line"
               loading={isLoading}
               disabled={isLoading}
               size="md"
@@ -261,10 +285,10 @@ export const ReportFilters = <T extends Record<string, any>>({
               {isLoading ? 'GENERATING...' : 'GENERATE REPORT'}
             </Button>
           )}
-          
+
           {onReset && (
-            <Button 
-              variant="secondary" 
+            <Button
+              variant="secondary"
               onClick={onReset}
               icon="fas fa-undo"
               size="md"
@@ -283,8 +307,8 @@ export const ReportFilters = <T extends Record<string, any>>({
 };
 
 // Preview URL Component
-export const PreviewUrl: React.FC<{ 
-  domain: string; 
+export const PreviewUrl: React.FC<{
+  domain: string;
   landingPage: string;
 }> = ({ domain, landingPage }) => {
   if (!domain || !landingPage) return null;

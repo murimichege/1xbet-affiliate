@@ -408,7 +408,7 @@ export interface ResourceLayoutConfig {
 export interface FilterField {
   key: string;
   label: string;
-  type: 'select' | 'text' | 'dual-input';
+  type: 'select' | 'multiselect' | 'text' | 'date' | 'dual-input' | 'datetime-local';
   options?: string[];
   placeholder?: string;
   className?: string;
